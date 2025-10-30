@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   Modal,
   KeyboardAvoidingView,
@@ -11,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useCreateList } from '../hooks/use-lists';
+import { Button } from '@/src/components/ui/button';
 
 interface CreateListFormProps {
   visible: boolean;
@@ -30,18 +30,23 @@ export function CreateListForm({ visible, onClose, userId }: CreateListFormProps
     }
 
     try {
-      await createList.mutateAsync({
+      const payload: any = {
         title: title.trim(),
-        description: description.trim() || undefined,
         ownerId: userId,
-      });
+      };
 
-      Alert.alert('Success', 'List created successfully');
+      // Only include description if it's not empty
+      if (description.trim()) {
+        payload.description = description.trim();
+      }
+
+      await createList.mutateAsync(payload);
+
       setTitle('');
       setDescription('');
       onClose();
     } catch (error) {
-      console.error(error);
+      console.error('Failed to create list:', error);
       Alert.alert('Error', 'Failed to create list');
     }
   };
@@ -73,26 +78,22 @@ export function CreateListForm({ visible, onClose, userId }: CreateListFormProps
           />
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+            <Button
+              variant="secondary"
+              title="Cancel"
               onPress={() => {
                 setTitle('');
                 setDescription('');
                 onClose();
               }}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.submitButton]}
+            />
+            <Button
+              variant="primary"
+              title="Create"
               onPress={handleSubmit}
-              disabled={createList.isPending}
-            >
-              <Text style={styles.submitButtonText}>
-                {createList.isPending ? 'Creating...' : 'Create'}
-              </Text>
-            </TouchableOpacity>
+              disabled={!title.trim()}
+              loading={createList.isPending}
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -136,27 +137,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#f0f0f0',
-  },
-  cancelButtonText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  submitButton: {
-    backgroundColor: '#007AFF',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

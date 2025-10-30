@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,30 +8,24 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useLists, useDeleteList } from '@/src/features/lists/hooks/use-lists';
 import { ListCard } from '@/src/features/lists/components/list-card';
 import { CreateListForm } from '@/src/features/lists/components/create-list-form';
 import { EditListForm } from '@/src/features/lists/components/edit-list-form';
 import { List } from '@/src/features/lists/types';
-import { useRouter } from 'expo-router';
-import { API_BASE_URL } from '@/src/constants/api';
+import { MAIN_COLOR } from '@/src/constants/theme';
 
 // TODO: Replace with actual user ID from authentication
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 export default function HomeScreen() {
-  const router = useRouter();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedList, setSelectedList] = useState<List | null>(null);
 
   const { data: lists, isLoading, error } = useLists(MOCK_USER_ID);
   const deleteList = useDeleteList();
-
-  useEffect(() => {
-    console.log('API Base URL:', API_BASE_URL);
-    console.log('Mock User ID:', MOCK_USER_ID);
-  }, []);
 
   const handleListPress = (list: List) => {
     // Navigate to list details screen (to be implemented)
@@ -52,8 +46,7 @@ export default function HomeScreen() {
         onPress: async () => {
           try {
             await deleteList.mutateAsync({ id: list.id, userId: MOCK_USER_ID });
-            Alert.alert('Success', 'List deleted successfully');
-          } catch (error) {
+          } catch (_error) {
             Alert.alert('Error', 'Failed to delete list');
           }
         },
@@ -83,7 +76,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Shopping Lists</Text>
         <TouchableOpacity style={styles.createButton} onPress={() => setCreateModalVisible(true)}>
-          <Text style={styles.createButtonText}>+ New List</Text>
+          <Ionicons name="add" size={28} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -97,18 +90,12 @@ export default function HomeScreen() {
           data={lists}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View>
-              <ListCard
-                list={item}
-                onPress={handleListPress}
-                onDelete={item.ownerId === MOCK_USER_ID ? handleDeleteList : undefined}
-              />
-              {item.ownerId === MOCK_USER_ID && (
-                <TouchableOpacity style={styles.editButton} onPress={() => handleEditList(item)}>
-                  <Text style={styles.editButtonText}>Edit</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+            <ListCard
+              list={item}
+              onPress={handleListPress}
+              onEdit={item.ownerId === MOCK_USER_ID ? handleEditList : undefined}
+              onDelete={item.ownerId === MOCK_USER_ID ? handleDeleteList : undefined}
+            />
           )}
           contentContainerStyle={styles.listContent}
         />
@@ -147,29 +134,37 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#fff',
     paddingTop: 60,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#f0f0f0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#333',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#1a1a1a',
+    letterSpacing: -0.5,
   },
   createButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  createButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    backgroundColor: MAIN_COLOR,
+    width: 38,
+    height: 38,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   listContent: {
     padding: 16,
@@ -202,19 +197,5 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     paddingHorizontal: 32,
-  },
-  editButton: {
-    position: 'absolute',
-    right: 80,
-    top: 16,
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-  },
-  editButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
   },
 });

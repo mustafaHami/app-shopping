@@ -5,7 +5,11 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
+// Modern, light/friendly colors
+export const MAIN_COLOR = '#479ad1'; // Soft/light blue (for validate/action)
+export const ERROR_COLOR = '#FF626F'; // Soft/light red (for errors, delete, etc)
+
+const tintColorLight = MAIN_COLOR;
 const tintColorDark = '#fff';
 
 export const Colors = {
@@ -16,6 +20,8 @@ export const Colors = {
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
+    main: MAIN_COLOR,
+    error: ERROR_COLOR,
   },
   dark: {
     text: '#ECEDEE',
@@ -24,6 +30,8 @@ export const Colors = {
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+    main: tintColorDark, // could define a dark-main if desired
+    error: ERROR_COLOR,
   },
 };
 

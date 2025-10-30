@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   Modal,
   KeyboardAvoidingView,
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 import { useUpdateList } from '../hooks/use-lists';
 import { List } from '../types';
+import { Button } from '@/src/components/ui/button';
 
 interface EditListFormProps {
   visible: boolean;
@@ -41,16 +41,21 @@ export function EditListForm({ visible, onClose, list, userId }: EditListFormPro
     }
 
     try {
+      const data: any = {
+        title: title.trim(),
+      };
+
+      // Only include description if it's not empty
+      if (description.trim()) {
+        data.description = description.trim();
+      }
+
       await updateList.mutateAsync({
         id: list.id,
         userId,
-        data: {
-          title: title.trim(),
-          description: description.trim() || undefined,
-        },
+        data,
       });
 
-      Alert.alert('Success', 'List updated successfully');
       onClose();
     } catch (error) {
       console.error(error);
@@ -85,19 +90,14 @@ export function EditListForm({ visible, onClose, list, userId }: EditListFormPro
           />
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.submitButton]}
+            <Button variant="secondary" title="Cancel" onPress={onClose} />
+            <Button
+              variant="primary"
+              title="Update"
               onPress={handleSubmit}
-              disabled={updateList.isPending}
-            >
-              <Text style={styles.submitButtonText}>
-                {updateList.isPending ? 'Updating...' : 'Update'}
-              </Text>
-            </TouchableOpacity>
+              disabled={!title.trim()}
+              loading={updateList.isPending}
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -141,27 +141,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#f0f0f0',
-  },
-  cancelButtonText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  submitButton: {
-    backgroundColor: '#007AFF',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

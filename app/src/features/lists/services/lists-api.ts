@@ -34,24 +34,17 @@ export const listsApi = {
   },
 
   async create(data: CreateListSchema): Promise<List> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/lists`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error:', response.status, errorText);
-        throw new Error(`Failed to create list: ${response.status}`);
-      }
-      return response.json();
-    } catch (error) {
-      console.error('Network Error:', error);
-      throw error;
+    const response = await fetch(`${API_BASE_URL}/lists`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to create list: ${response.status}`);
     }
+    return response.json();
   },
 
   async update(id: string, userId: string, data: UpdateListSchema): Promise<List> {

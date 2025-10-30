@@ -1,99 +1,220 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { useLists, useDeleteList } from '@/src/features/lists/hooks/use-lists';
+import { ListCard } from '@/src/features/lists/components/list-card';
+import { CreateListForm } from '@/src/features/lists/components/create-list-form';
+import { EditListForm } from '@/src/features/lists/components/edit-list-form';
+import { List } from '@/src/features/lists/types';
+import { useRouter } from 'expo-router';
+import { API_BASE_URL } from '@/src/constants/api';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+// TODO: Replace with actual user ID from authentication
+const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedList, setSelectedList] = useState<List | null>(null);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const { data: lists, isLoading, error } = useLists(MOCK_USER_ID);
+  const deleteList = useDeleteList();
+
+  useEffect(() => {
+    console.log('API Base URL:', API_BASE_URL);
+    console.log('Mock User ID:', MOCK_USER_ID);
+  }, []);
+
+  const handleListPress = (list: List) => {
+    // Navigate to list details screen (to be implemented)
+    Alert.alert('List Selected', `Selected: ${list.title}`);
+  };
+
+  const handleEditList = (list: List) => {
+    setSelectedList(list);
+    setEditModalVisible(true);
+  };
+
+  const handleDeleteList = (list: List) => {
+    Alert.alert('Delete List', `Are you sure you want to delete "${list.title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteList.mutateAsync({ id: list.id, userId: MOCK_USER_ID });
+            Alert.alert('Success', 'List deleted successfully');
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete list');
+          }
+        },
+      },
+    ]);
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>Error loading lists</Text>
+        <Text style={styles.errorSubtext}>{error.message}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Shopping Lists</Text>
+        <TouchableOpacity style={styles.createButton} onPress={() => setCreateModalVisible(true)}>
+          <Text style={styles.createButtonText}>+ New List</Text>
+        </TouchableOpacity>
+      </View>
+
+      {lists && lists.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No lists yet</Text>
+          <Text style={styles.emptySubtext}>Create your first shopping list to get started</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={lists}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <View>
+              <ListCard
+                list={item}
+                onPress={handleListPress}
+                onDelete={item.ownerId === MOCK_USER_ID ? handleDeleteList : undefined}
+              />
+              {item.ownerId === MOCK_USER_ID && (
+                <TouchableOpacity style={styles.editButton} onPress={() => handleEditList(item)}>
+                  <Text style={styles.editButtonText}>Edit</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
+
+      <CreateListForm
+        visible={createModalVisible}
+        onClose={() => setCreateModalVisible(false)}
+        userId={MOCK_USER_ID}
+      />
+
+      <EditListForm
+        visible={editModalVisible}
+        onClose={() => {
+          setEditModalVisible(false);
+          setSelectedList(null);
+        }}
+        list={selectedList}
+        userId={MOCK_USER_ID}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
-  stepContainer: {
-    gap: 8,
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    backgroundColor: '#fff',
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#333',
+  },
+  createButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  listContent: {
+    padding: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#999',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  emptySubtext: {
+    fontSize: 16,
+    color: '#bbb',
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#ff4444',
+    marginBottom: 8,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  editButton: {
     position: 'absolute',
+    right: 80,
+    top: 16,
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

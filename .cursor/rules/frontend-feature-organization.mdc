@@ -1,0 +1,87 @@
+---
+description: Preferred frontend organization by feature (Expo/React Native with Expo Router)
+alwaysApply: false
+---
+
+# Frontend Feature-First Organization (Expo/React Native)
+
+For scalable frontends, use organization by **feature/domain** inside `src/`, and keep global/shared code alongside (not deeply nested).
+
+## Recommended Structure
+
+```
+app/
+  ├── index.tsx           # Main/home route (file-based routed)
+  ├── login/               # Routing folders - can point to feature screens
+  │    └── index.tsx       # ...
+src/
+  ├── users/
+  │   ├── components/
+  │   ├── hooks/
+  │   ├── schemas/
+  │   ├── services/
+  │   ├── types.ts
+  │   └── ...
+  ├── lists/
+  │   ├── components/
+  │   ├── hooks/
+  │   ├── schemas/
+  │   ├── services/
+  │   ├── types.ts
+  │   └── ...
+  ├── items/
+  │   ├── components/
+  │   ├── hooks/
+  │   ├── schemas/
+  │   ├── services/
+  │   ├── types.ts
+  │   └── ...
+  ├── api/                 # API clients, HTTP utilities, or fetch wrappers
+  ├── components/          # Global reusable UI components
+  ├── hooks/               # Global custom React hooks
+  ├── constants/           # Global constants (theme, config, etc.)
+  ├── utils/               # Global utils/helpers
+  ├── theme/               # Global theming configuration (added later if needed)
+  ├── types/               # Global shared TypeScript types
+```
+
+## Principles
+
+- **Each feature is a folder in `src/features/`**
+  - Contains screens (if any), logic, and subcomponents for that specific feature.
+  - Example: `src/features/lists/` or `src/features/items/`.
+- **Global/shared modules**
+  - `src/components/`, `src/hooks/`, `src/constants/`, and `src/lib/` (or `src/utils/`) are for cross-feature or cross-app logic only.
+  - These folders should contain reusable and framework-agnostic code (no business logic).
+- **No nesting features inside features**
+  - Keep all features flat under `src/features/` (e.g., `lists/`, `items/`, `auth/`).
+  - Each feature folder owns its own subfolders:
+    - `components/` → UI components
+    - `hooks/` → state & logic
+    - `services/` → API calls
+    - `types.ts` → TypeScript types
+- **All routing stays in `app/`**
+  - Use Expo Router to define screens and navigation.
+  - Route files should only import and render feature screens or containers from `src/features/`.
+- **Keep screens stateless where possible**
+  - Screens inside `app/` should act as view shells—render UI only, and delegate all logic (state, API calls, etc.) to hooks or services from `src/features/`.
+- **Organize logic by responsibility**
+  - UI logic → in `components/` (React components only)
+  - Data fetching → in `services/` (network requests, API helpers)
+  - State and business logic → in `hooks/` (React hooks, useQuery, useMutation)
+  - Type definitions → in `types.ts`
+- **Use aliases instead of relative imports**
+  - Always import using short aliases (e.g., `@features/lists/services/lists.api.ts`) instead of long relative paths like `../../../../lists/services/...`.
+- **TypeScript first**
+  - Every file must be typed.
+  - Define clear interfaces or types for all props, API data, and state variables.
+- **No unused code**
+  - Remove commented-out code, unused imports, and dead files before committing.
+- **Simple, readable, predictable**
+  - Favor small, composable components and functions.
+  - Avoid over-engineering; prioritize maintainability and clarity.
+- **Use Zod for schema validation and DTOs**
+  - Zod should be used to define data validation schemas for API inputs, outputs, and forms.Each feature that manages data should have a (name)\_schema.ts name correspond to object name, file inside its folder (e.g., src/features/lists/schemas/list_schema.ts).
+  - Use Zod schemas to validate data fetched from APIs or submitted via forms.
+  - Export Zod-derived types (z.infer<typeof schema>) for strong TypeScript typing.
+  - Use these schemas in services/ for runtime validation and in hooks/ for type safety in mutations or queries.

@@ -1,0 +1,40 @@
+---
+description: Apply when you need to create new file in api folder
+alwaysApply: false
+---
+
+# NestJS Backend: Organization by Feature (Recommended)
+
+For scalable NestJS projects, prefer grouping code **by feature/domain** rather than by technical type.
+
+## Structure Example
+
+```
+api/src/
+  ├── list/
+  │   ├── list.module.ts
+  │   ├── list.controller.ts
+  │   ├── list.service.ts
+  │   ├── dto/
+  │   └── entities/
+  ├── items/
+  │   ├── items.module.ts
+  │   ├── items.controller.ts
+  │   └── items.service.ts
+  ├── ... other features ...
+  ├── app.module.ts
+  └── main.ts
+```
+
+## Principles
+
+- **Each feature is a folder** containing its own module, controller, service(s), and DTO/entities.
+- Shared code (utils, common DTOs, guards, pipes, etc.) should go in a `common/` or `shared/` folder at the root of `src/`.
+- The root `app.module.ts` only imports and composes top-level feature modules.
+- This modular setup helps with reusability, maintainability, and clarity as the codebase grows.
+
+## Benefits
+
+- Easier onboarding: Domain logic is intuitively discoverable.
+- Reduces code scattering and huge flat files.
+- Prepares codebase for microservices or API boundaries if ever needed.

@@ -6,6 +6,7 @@
 - [x] Read / list all my lists // 2025-10-30: implemented GET /lists API endpoint and useLists hook with list display
 - [x] Update a list title // 2025-10-30: implemented PATCH /lists/:id API endpoint and EditListForm component
 - [x] Delete a list // 2025-10-30: implemented DELETE /lists/:id API endpoint and useDeleteList hook
+- [x] Search lists by title // 2025-11-01: implemented animated search bar with icon toggle and title filtering
 
 ## Items (inside a list) - Dedicated page navigation
 

@@ -72,9 +72,17 @@ export function EditItemForm({ visible, onClose, item, userId, allCategories }: 
         listId: item.listId,
       });
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      Alert.alert('Error', 'Failed to update item');
+      // Handle 409 Conflict (duplicate item)
+      if (error.status === 409 || error.message?.includes('already exists')) {
+        Alert.alert(
+          'Duplicate Item',
+          error.message || 'An item with this name already exists in the list',
+        );
+      } else {
+        Alert.alert('Error', error.message || 'Failed to update item');
+      }
     }
   };
 

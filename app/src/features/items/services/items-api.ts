@@ -28,7 +28,10 @@ export const itemsApi = {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      throw new Error(`Failed to create item: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ message: 'Failed to create item' }));
+      const error = new Error(errorData.message || `Failed to create item: ${response.status}`);
+      (error as any).status = response.status;
+      throw error;
     }
     return response.json();
   },
@@ -42,7 +45,10 @@ export const itemsApi = {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      throw new Error(`Failed to update item: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ message: 'Failed to update item' }));
+      const error = new Error(errorData.message || `Failed to update item: ${response.status}`);
+      (error as any).status = response.status;
+      throw error;
     }
     return response.json();
   },

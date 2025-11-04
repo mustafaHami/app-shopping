@@ -18,18 +18,20 @@
 - [x] Mark an item as purchased (checked) on list page // 2025-10-31: implemented PATCH /items/:id/toggle API and toggle functionality
 - [x] Uncheck an item (unchecked) on list page // 2025-10-31: same as above, toggle handles both
 
+## Validation rules (functional)
+
+- [x] Prevent adding the same item twice in the same list (title-based) // 2025-11-01: implemented duplicate validation in backend (create & update) with 409 error handling in frontend
+
+## Acceptance / UI
+
+- [x] Clear user feedback for each action (success / error) // 2025-11-01: implemented clear error messages with Alert.alert for all item operations
+- [x] Clear error when attempting to add duplicates (item or user) // 2025-11-01: implemented 409 conflict error handling with specific duplicate item messages
+
+# Functional checklist — ShoppingList (Phase 2)
+
 ## Sharing / Members
 
 - [ ] Invite/add a user to a list via their email
 - [ ] List members of a list
 - [ ] Remove a member from a list
-
-## Validation rules (functional)
-
-- [ ] Prevent adding the same item twice in the same list (title-based)
 - [ ] Prevent adding the same user twice in the same list (email-based)
-
-## Acceptance / UI
-
-- [ ] Clear user feedback for each action (success / error)
-- [ ] Clear error when attempting to add duplicates (item or user)

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useCreateItem } from '../hooks/use-items';
 import { Button } from '@/src/components/ui/button';
-import { MAIN_COLOR } from '@/src/constants/theme';
+import { ERROR_COLOR, MAIN_COLOR } from '@/src/constants/theme';
 import { CategorySelector } from './category-selector';
 
 interface CreateItemFormProps {
@@ -35,6 +35,7 @@ export function CreateItemForm({
   const [unit, setUnit] = useState('');
   const [notes, setNotes] = useState('');
   const [category, setCategory] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const createItem = useCreateItem();
 
   const resetForm = () => {
@@ -43,6 +44,7 @@ export function CreateItemForm({
     setUnit('');
     setNotes('');
     setCategory('');
+    setErrorMessage('');
   };
 
   const handleSubmit = async () => {
@@ -67,9 +69,14 @@ export function CreateItemForm({
       await createItem.mutateAsync({ data: payload, userId });
       resetForm();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      Alert.alert('Error', 'Failed to create item');
+      // Handle 409 Conflict (duplicate item)
+      if (error.status === 409 || error.message?.includes('already exists')) {
+        setErrorMessage(error.message || 'This item already exists in the list');
+      } else {
+        setErrorMessage(error.message || 'Failed to create item');
+      }
     }
   };
 
@@ -82,7 +89,7 @@ export function CreateItemForm({
         <View style={styles.modalContent}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={styles.modalTitle}>Add New Item</Text>
-
+            <Text style={styles.errorMessage}>{errorMessage}</Text>
             <Text style={styles.label}>
               Item Name <Text style={styles.required}>*</Text>
             </Text>
@@ -183,6 +190,11 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 8,
     marginTop: 12,
+  },
+  errorMessage: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: ERROR_COLOR,
   },
   required: {
     color: '#FF626F',

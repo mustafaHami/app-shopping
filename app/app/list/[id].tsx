@@ -109,39 +109,41 @@ export default function ListDetailsScreen() {
         }}
       />
       {usedCategories.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterBar}
-          contentContainerStyle={styles.filterBarContent}
-        >
-          <TouchableOpacity
-            style={[styles.filterChip, !categoryFilter && styles.filterChipActive]}
-            onPress={() => setCategoryFilter('')}
-            activeOpacity={0.8}
+        <View style={styles.filterBarWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterBar}
+            contentContainerStyle={styles.filterBarContent}
           >
-            <Text style={[styles.filterChipText, !categoryFilter && styles.filterChipTextActive]}>
-              All
-            </Text>
-          </TouchableOpacity>
-          {usedCategories.map(cat => (
             <TouchableOpacity
-              key={cat}
-              style={[styles.filterChip, categoryFilter === cat && styles.filterChipActive]}
-              onPress={() => setCategoryFilter(cat || '')}
+              style={[styles.filterChip, !categoryFilter && styles.filterChipActive]}
+              onPress={() => setCategoryFilter('')}
               activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  categoryFilter === cat && styles.filterChipTextActive,
-                ]}
-              >
-                {cat}
+              <Text style={[styles.filterChipText, !categoryFilter && styles.filterChipTextActive]}>
+                All
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+            {usedCategories.map(cat => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.filterChip, categoryFilter === cat && styles.filterChipActive]}
+                onPress={() => setCategoryFilter(cat || '')}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    categoryFilter === cat && styles.filterChipTextActive,
+                  ]}
+                >
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
       )}
       {!items || filteredItems.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -348,19 +350,23 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  filterBarWrapper: {
+    maxHeight: 50,
+    flexShrink: 0,
+  },
   filterBar: {
     backgroundColor: 'transparent',
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   filterBarContent: {
     paddingLeft: 16,
     paddingRight: 16,
-    gap: 8,
+    gap: 6,
   },
   filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
     backgroundColor: '#ededed',
     marginHorizontal: 2,
   },
@@ -368,7 +374,7 @@ const styles = StyleSheet.create({
     backgroundColor: MAIN_COLOR,
   },
   filterChipText: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#444',
   },
   filterChipTextActive: {

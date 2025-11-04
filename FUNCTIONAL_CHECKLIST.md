@@ -7,17 +7,15 @@
 - [x] Update a list title // 2025-10-30: implemented PATCH /lists/:id API endpoint and EditListForm component
 - [x] Delete a list // 2025-10-30: implemented DELETE /lists/:id API endpoint and useDeleteList hook
 
-## Items (inside a list)
+## Items (inside a list) - Dedicated page navigation
 
-- [ ] Add an item (title, qty required; unit/note/category optional)
-- [ ] List items in a list
-- [ ] Update an item (title, qty, unit, note, category)
-- [ ] Delete an item
-
-## Checked / unchecked
-
-- [ ] Mark an item as purchased (checked)
-- [ ] Uncheck an item (unchecked)
+- [x] Navigate to list details page when clicking on a list card // 2025-10-31: implemented dynamic route /list/[id] with navigation
+- [x] Display all items for the selected list on dedicated page // 2025-10-31: implemented GET /items/list/:listId API and display
+- [x] Add an item (title, qty required; unit/note/category optional) on list page // 2025-10-31: implemented POST /items API and CreateItemForm component
+- [x] Update an item (title, qty, unit, note, category) on list page // 2025-10-31: implemented PATCH /items/:id API and EditItemForm component
+- [x] Delete an item from list page // 2025-10-31: implemented DELETE /items/:id API and delete functionality
+- [x] Mark an item as purchased (checked) on list page // 2025-10-31: implemented PATCH /items/:id/toggle API and toggle functionality
+- [x] Uncheck an item (unchecked) on list page // 2025-10-31: same as above, toggle handles both
 
 ## Sharing / Members
 

@@ -25,3 +25,4 @@ export const updateListSchema = z.object({
 export type ListSchema = z.infer<typeof listSchema>;
 export type CreateListSchema = z.infer<typeof createListSchema>;
 export type UpdateListSchema = z.infer<typeof updateListSchema>;
+

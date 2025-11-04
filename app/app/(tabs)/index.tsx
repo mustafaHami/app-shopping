@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useLists, useDeleteList } from '@/src/features/lists/hooks/use-lists';
 import { ListCard } from '@/src/features/lists/components/list-card';
 import { CreateListForm } from '@/src/features/lists/components/create-list-form';
@@ -20,16 +22,23 @@ import { MAIN_COLOR } from '@/src/constants/theme';
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedList, setSelectedList] = useState<List | null>(null);
 
-  const { data: lists, isLoading, error } = useLists(MOCK_USER_ID);
+  const { data: lists, isLoading, error, refetch } = useLists(MOCK_USER_ID);
   const deleteList = useDeleteList();
 
+  // Refetch lists every time HomeScreen gets focus (comes back from item detail page)
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
+
   const handleListPress = (list: List) => {
-    // Navigate to list details screen (to be implemented)
-    Alert.alert('List Selected', `Selected: ${list.title}`);
+    router.push(`/list/${list.id}`);
   };
 
   const handleEditList = (list: List) => {
@@ -57,7 +66,7 @@ export default function HomeScreen() {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={MAIN_COLOR} />
       </View>
     );
   }

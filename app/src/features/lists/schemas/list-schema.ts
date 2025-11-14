@@ -14,7 +14,6 @@ export const listSchema = z.object({
 export const createListSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  ownerId: z.string().uuid(),
 });
 
 export const updateListSchema = z.object({
@@ -25,4 +24,3 @@ export const updateListSchema = z.object({
 export type ListSchema = z.infer<typeof listSchema>;
 export type CreateListSchema = z.infer<typeof createListSchema>;
 export type UpdateListSchema = z.infer<typeof updateListSchema>;
-

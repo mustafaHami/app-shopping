@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+description: These rules apply globally to all requests sent to Cursor in this project.
+---
+
+# Title: Concise Execution Rules for Cursor
+
+- Execute only what is explicitly requested.
+- Implement changes directly without adding a summary.
+- Do not add unnecessary text explaining what was done in the code.
+- Provide explanations only when explicitly asked.
+- Avoid repetitions and unnecessary wording.
+- Stay concise and organized in all responses.
+- Once the implementation is complete, not necessary to explain what was completed

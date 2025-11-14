@@ -19,9 +19,7 @@ import { CreateListForm } from '@/src/features/lists/components/create-list-form
 import { EditListForm } from '@/src/features/lists/components/edit-list-form';
 import { List } from '@/src/features/lists/types';
 import { MAIN_COLOR } from '@/src/constants/theme';
-
-// TODO: Replace with actual user ID from authentication
-const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
+import { useCurrentUser } from '@/src/features/auth/hooks/use-auth';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -31,7 +29,8 @@ export default function HomeScreen() {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: lists, isLoading, error, refetch } = useLists(MOCK_USER_ID);
+  const { data: currentUser } = useCurrentUser();
+  const { data: lists, isLoading, error, refetch } = useLists();
   const deleteList = useDeleteList();
 
   // Animation for search bar
@@ -93,7 +92,7 @@ export default function HomeScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await deleteList.mutateAsync({ id: list.id, userId: MOCK_USER_ID });
+            await deleteList.mutateAsync({ id: list.id });
           } catch (_error) {
             Alert.alert('Error', 'Failed to delete list');
           }
@@ -184,19 +183,15 @@ export default function HomeScreen() {
             <ListCard
               list={item}
               onPress={handleListPress}
-              onEdit={item.ownerId === MOCK_USER_ID ? handleEditList : undefined}
-              onDelete={item.ownerId === MOCK_USER_ID ? handleDeleteList : undefined}
+              onEdit={item.ownerId === currentUser?.id ? handleEditList : undefined}
+              onDelete={item.ownerId === currentUser?.id ? handleDeleteList : undefined}
             />
           )}
           contentContainerStyle={styles.listContent}
         />
       )}
 
-      <CreateListForm
-        visible={createModalVisible}
-        onClose={() => setCreateModalVisible(false)}
-        userId={MOCK_USER_ID}
-      />
+      <CreateListForm visible={createModalVisible} onClose={() => setCreateModalVisible(false)} />
 
       <EditListForm
         visible={editModalVisible}
@@ -205,7 +200,6 @@ export default function HomeScreen() {
           setSelectedList(null);
         }}
         list={selectedList}
-        userId={MOCK_USER_ID}
       />
     </View>
   );

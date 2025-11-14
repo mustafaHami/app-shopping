@@ -15,10 +15,9 @@ import { Button } from '@/src/components/ui/button';
 interface CreateListFormProps {
   visible: boolean;
   onClose: () => void;
-  userId: string;
 }
 
-export function CreateListForm({ visible, onClose, userId }: CreateListFormProps) {
+export function CreateListForm({ visible, onClose }: CreateListFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const createList = useCreateList();
@@ -32,7 +31,6 @@ export function CreateListForm({ visible, onClose, userId }: CreateListFormProps
     try {
       const payload: any = {
         title: title.trim(),
-        ownerId: userId,
       };
 
       // Only include description if it's not empty

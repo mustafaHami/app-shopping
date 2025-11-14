@@ -1,28 +1,15 @@
-import { API_BASE_URL } from '@/src/constants/api';
+import { apiClient } from '@/src/lib/api-client';
 import { Category } from '../types';
 
 export const categoriesApi = {
-  async getAll(userId: string): Promise<Category[]> {
-    const response = await fetch(`${API_BASE_URL}/categories?userId=${userId}`);
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to fetch categories: ${response.status} ${errorText}`);
-    }
-    return response.json();
+  async getAll(): Promise<Category[]> {
+    return apiClient<Category[]>('/categories');
   },
 
-  async create(name: string, userId: string): Promise<Category> {
-    const response = await fetch(`${API_BASE_URL}/categories`, {
+  async create(name: string): Promise<Category> {
+    return apiClient<Category>('/categories', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, userId }),
+      body: { name },
     });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to create category: ${response.status} ${errorText}`);
-    }
-    return response.json();
   },
 };

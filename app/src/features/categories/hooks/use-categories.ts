@@ -3,19 +3,17 @@ import { categoriesApi } from '../services/categories-api';
 
 const CATEGORIES_QUERY_KEY = 'categories';
 
-export function useCategories(userId: string) {
+export function useCategories() {
   return useQuery({
-    queryKey: [CATEGORIES_QUERY_KEY, userId],
-    queryFn: () => categoriesApi.getAll(userId),
-    enabled: !!userId,
+    queryKey: [CATEGORIES_QUERY_KEY],
+    queryFn: () => categoriesApi.getAll(),
   });
 }
 
 export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ name, userId }: { name: string; userId: string }) =>
-      categoriesApi.create(name, userId),
+    mutationFn: (name: string) => categoriesApi.create(name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [CATEGORIES_QUERY_KEY] });
     },

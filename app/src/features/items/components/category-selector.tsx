@@ -18,7 +18,6 @@ interface CategorySelectorProps {
   onChange: (category: string) => void;
   categories: string[];
   label?: string;
-  userId: string;
 }
 
 export function CategorySelector({
@@ -26,7 +25,6 @@ export function CategorySelector({
   onChange,
   categories,
   label = 'Category',
-  userId,
 }: CategorySelectorProps) {
   const [showModal, setShowModal] = useState(false);
   const [addingNew, setAddingNew] = useState(false);
@@ -48,7 +46,7 @@ export function CategorySelector({
   const handleAddNew = async () => {
     if (newCategory.trim()) {
       try {
-        await createCategory.mutateAsync({ name: newCategory.trim(), userId });
+        await createCategory.mutateAsync(newCategory.trim());
         onChange(newCategory.trim());
         setShowModal(false);
         setAddingNew(false);

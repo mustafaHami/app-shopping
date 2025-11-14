@@ -29,9 +29,14 @@
 
 # Functional checklist — ShoppingList (Phase 2)
 
-## Sharing / Members
+## Authentication
 
-- [ ] Invite/add a user to a list via their email
-- [ ] List members of a list
-- [ ] Remove a member from a list
-- [ ] Prevent adding the same user twice in the same list (email-based)
+- [x] Allow user sign up with email + password (front flow) // 2025-11-14: implemented Supabase auth with signUp service, useSignUp hook, and sign-up screen
+- [x] Allow user sign in with email + password (front flow) // 2025-11-14: implemented signIn service, useSignIn hook, and sign-in screen with auth routing
+- [x] Store session tokens securely on client (Expo SecureStore) // 2025-11-14: implemented custom storage adapter using Expo SecureStore in supabase client
+- [x] Protect backend endpoints by validating JWT from Supabase // 2025-11-14: implemented AuthGuard with Supabase JWT verification, applied to lists, items, and categories routes
+- [x] Provide sign-out (revoke session client-side) // 2025-11-14: implemented signOut service and useSignOut hook
+- [x] Provide password reset (via Supabase built-in) // 2025-11-14: implemented resetPassword service and useResetPassword hook
+- [x] Use authenticated user instead of MOCK_USER_ID // 2025-11-14: updated all API calls to use authenticated user from JWT tokens
+- [x] Root layout auth state management // 2025-11-14: implemented auth state listener and automatic redirect to sign-in when not authenticated
+- [ ] (Optional) Email verification flow (Supabase built-in)

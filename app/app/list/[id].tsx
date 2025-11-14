@@ -19,9 +19,6 @@ import { CreateItemForm } from '@/src/features/items/components/create-item-form
 import { EditItemForm } from '@/src/features/items/components/edit-item-form';
 import { MAIN_COLOR, ERROR_COLOR } from '@/src/constants/theme';
 
-// TODO: Replace with actual user ID from authentication
-const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
-
 export default function ListDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -29,9 +26,9 @@ export default function ListDetailsScreen() {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
 
-  const { data: list, isLoading: listLoading } = useList(id!, MOCK_USER_ID);
-  const { data: items, isLoading: itemsLoading, error } = useItems(id!, MOCK_USER_ID);
-  const { data: categories } = useCategories(MOCK_USER_ID);
+  const { data: list, isLoading: listLoading } = useList(id!);
+  const { data: items, isLoading: itemsLoading, error } = useItems(id!);
+  const { data: categories } = useCategories();
   const deleteItem = useDeleteItem();
   const toggleItem = useToggleItem();
 
@@ -58,7 +55,7 @@ export default function ListDetailsScreen() {
 
   const handleToggleCheck = async (item: Item) => {
     try {
-      await toggleItem.mutateAsync({ id: item.id, userId: MOCK_USER_ID, listId: id! });
+      await toggleItem.mutateAsync({ id: item.id, listId: id! });
     } catch (_error) {
       Alert.alert('Error', 'Failed to update item');
     }
@@ -72,7 +69,7 @@ export default function ListDetailsScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await deleteItem.mutateAsync({ id: item.id, userId: MOCK_USER_ID, listId: id! });
+            await deleteItem.mutateAsync({ id: item.id, listId: id! });
           } catch (_error) {
             Alert.alert('Error', 'Failed to delete item');
           }
@@ -210,7 +207,6 @@ export default function ListDetailsScreen() {
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}
         listId={id!}
-        userId={MOCK_USER_ID}
         allCategories={allCategoryNames}
       />
       <EditItemForm
@@ -220,7 +216,6 @@ export default function ListDetailsScreen() {
           setSelectedItem(null);
         }}
         item={selectedItem}
-        userId={MOCK_USER_ID}
         allCategories={allCategoryNames}
       />
     </View>

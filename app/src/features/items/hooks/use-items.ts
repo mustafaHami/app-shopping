@@ -4,19 +4,19 @@ import { CreateItemSchema, UpdateItemSchema } from '../schemas/item-schema';
 
 const ITEMS_QUERY_KEY = 'items';
 
-export function useItems(listId: string, userId: string) {
+export function useItems(listId: string) {
   return useQuery({
-    queryKey: [ITEMS_QUERY_KEY, listId, userId],
-    queryFn: () => itemsApi.getAll(listId, userId),
-    enabled: !!listId && !!userId,
+    queryKey: [ITEMS_QUERY_KEY, listId],
+    queryFn: () => itemsApi.getAll(listId),
+    enabled: !!listId,
   });
 }
 
-export function useItem(id: string, userId: string) {
+export function useItem(id: string) {
   return useQuery({
-    queryKey: [ITEMS_QUERY_KEY, id, userId],
-    queryFn: () => itemsApi.getById(id, userId),
-    enabled: !!id && !!userId,
+    queryKey: [ITEMS_QUERY_KEY, id],
+    queryFn: () => itemsApi.getById(id),
+    enabled: !!id,
   });
 }
 
@@ -24,11 +24,10 @@ export function useCreateItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ data, userId }: { data: CreateItemSchema; userId: string }) =>
-      itemsApi.create(data, userId),
+    mutationFn: (data: CreateItemSchema) => itemsApi.create(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [ITEMS_QUERY_KEY, variables.data.listId],
+        queryKey: [ITEMS_QUERY_KEY, variables.listId],
       });
     },
   });
@@ -38,17 +37,8 @@ export function useUpdateItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      userId,
-      data,
-      listId,
-    }: {
-      id: string;
-      userId: string;
-      data: UpdateItemSchema;
-      listId: string;
-    }) => itemsApi.update(id, userId, data),
+    mutationFn: ({ id, data, listId }: { id: string; data: UpdateItemSchema; listId: string }) =>
+      itemsApi.update(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: [ITEMS_QUERY_KEY, variables.listId],
@@ -61,8 +51,7 @@ export function useToggleItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, userId, listId }: { id: string; userId: string; listId: string }) =>
-      itemsApi.toggleChecked(id, userId),
+    mutationFn: ({ id, listId }: { id: string; listId: string }) => itemsApi.toggleChecked(id),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: [ITEMS_QUERY_KEY, variables.listId],
@@ -75,8 +64,7 @@ export function useDeleteItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, userId, listId }: { id: string; userId: string; listId: string }) =>
-      itemsApi.delete(id, userId),
+    mutationFn: ({ id, listId }: { id: string; listId: string }) => itemsApi.delete(id),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: [ITEMS_QUERY_KEY, variables.listId],

@@ -4,19 +4,18 @@ import { CreateListSchema, UpdateListSchema } from '../schemas/list-schema';
 
 const LISTS_QUERY_KEY = 'lists';
 
-export function useLists(userId: string) {
+export function useLists() {
   return useQuery({
-    queryKey: [LISTS_QUERY_KEY, userId],
-    queryFn: () => listsApi.getAll(userId),
-    enabled: !!userId,
+    queryKey: [LISTS_QUERY_KEY],
+    queryFn: () => listsApi.getAll(),
   });
 }
 
-export function useList(id: string, userId: string) {
+export function useList(id: string) {
   return useQuery({
-    queryKey: [LISTS_QUERY_KEY, id, userId],
-    queryFn: () => listsApi.getById(id, userId),
-    enabled: !!id && !!userId,
+    queryKey: [LISTS_QUERY_KEY, id],
+    queryFn: () => listsApi.getById(id),
+    enabled: !!id,
   });
 }
 
@@ -25,8 +24,8 @@ export function useCreateList() {
 
   return useMutation({
     mutationFn: (data: CreateListSchema) => listsApi.create(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY, variables.ownerId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY] });
     },
   });
 }
@@ -35,11 +34,11 @@ export function useUpdateList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, userId, data }: { id: string; userId: string; data: UpdateListSchema }) =>
-      listsApi.update(id, userId, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateListSchema }) =>
+      listsApi.update(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY, variables.id] });
-      queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY, variables.userId] });
+      queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY] });
     },
   });
 }
@@ -48,9 +47,9 @@ export function useDeleteList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, userId }: { id: string; userId: string }) => listsApi.delete(id, userId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY, variables.userId] });
+    mutationFn: ({ id }: { id: string }) => listsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY] });
     },
   });
 }

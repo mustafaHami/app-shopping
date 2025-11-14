@@ -20,11 +20,10 @@ interface EditItemFormProps {
   visible: boolean;
   onClose: () => void;
   item: Item | null;
-  userId: string;
   allCategories: string[];
 }
 
-export function EditItemForm({ visible, onClose, item, userId, allCategories }: EditItemFormProps) {
+export function EditItemForm({ visible, onClose, item, allCategories }: EditItemFormProps) {
   const [title, setTitle] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('');
@@ -67,7 +66,6 @@ export function EditItemForm({ visible, onClose, item, userId, allCategories }: 
 
       await updateItem.mutateAsync({
         id: item.id,
-        userId,
         data,
         listId: item.listId,
       });
@@ -130,12 +128,7 @@ export function EditItemForm({ visible, onClose, item, userId, allCategories }: 
               </View>
             </View>
 
-            <CategorySelector
-              value={category}
-              onChange={setCategory}
-              categories={allCategories}
-              userId={userId}
-            />
+            <CategorySelector value={category} onChange={setCategory} categories={allCategories} />
 
             <Text style={styles.label}>Notes</Text>
             <TextInput

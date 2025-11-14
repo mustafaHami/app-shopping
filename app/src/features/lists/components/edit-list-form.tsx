@@ -17,10 +17,9 @@ interface EditListFormProps {
   visible: boolean;
   onClose: () => void;
   list: List | null;
-  userId: string;
 }
 
-export function EditListForm({ visible, onClose, list, userId }: EditListFormProps) {
+export function EditListForm({ visible, onClose, list }: EditListFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const updateList = useUpdateList();
@@ -52,7 +51,6 @@ export function EditListForm({ visible, onClose, list, userId }: EditListFormPro
 
       await updateList.mutateAsync({
         id: list.id,
-        userId,
         data,
       });
 

@@ -19,17 +19,10 @@ interface CreateItemFormProps {
   visible: boolean;
   onClose: () => void;
   listId: string;
-  userId: string;
   allCategories: string[];
 }
 
-export function CreateItemForm({
-  visible,
-  onClose,
-  listId,
-  userId,
-  allCategories,
-}: CreateItemFormProps) {
+export function CreateItemForm({ visible, onClose, listId, allCategories }: CreateItemFormProps) {
   const [title, setTitle] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('');
@@ -66,7 +59,7 @@ export function CreateItemForm({
       if (unit.trim()) payload.unit = unit.trim();
       if (notes.trim()) payload.notes = notes.trim();
       if (category.trim()) payload.category = category.trim();
-      await createItem.mutateAsync({ data: payload, userId });
+      await createItem.mutateAsync(payload);
       resetForm();
       onClose();
     } catch (error: any) {
@@ -124,12 +117,7 @@ export function CreateItemForm({
               </View>
             </View>
 
-            <CategorySelector
-              value={category}
-              onChange={setCategory}
-              categories={allCategories}
-              userId={userId}
-            />
+            <CategorySelector value={category} onChange={setCategory} categories={allCategories} />
 
             <Text style={styles.label}>Notes</Text>
             <TextInput

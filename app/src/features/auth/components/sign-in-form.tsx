@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { signInSchema } from '../schemas/auth-schema';
 import { SignInData } from '../types';
 import { useSignIn } from '../hooks/use-auth';
+import { MAIN_COLOR } from '@/src/constants/theme';
 
 interface SignInFormProps {
   onSuccess?: () => void;
@@ -30,7 +31,6 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
   const onSubmit = (data: SignInData) => {
     signIn(data, {
       onSuccess: () => {
-        Alert.alert('Success', 'Signed in successfully!');
         onSuccess?.();
       },
       onError: error => {
@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: MAIN_COLOR,
     borderRadius: 8,
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
     marginTop: 8,
   },
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: '#007AFF',
+    color: MAIN_COLOR,
     fontSize: 14,
   },
 });

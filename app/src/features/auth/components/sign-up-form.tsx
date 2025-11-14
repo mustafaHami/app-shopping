@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { signUpSchema } from '../schemas/auth-schema';
 import { SignUpData } from '../types';
 import { useSignUp } from '../hooks/use-auth';
+import { MAIN_COLOR } from '@/src/constants/theme';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -145,9 +146,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: MAIN_COLOR,
     borderRadius: 8,
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
     marginTop: 8,
   },
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: '#007AFF',
+    color: MAIN_COLOR,
     fontSize: 14,
   },
 });

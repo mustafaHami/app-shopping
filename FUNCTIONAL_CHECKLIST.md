@@ -39,4 +39,9 @@
 - [x] Provide password reset (via Supabase built-in) // 2025-11-14: implemented resetPassword service and useResetPassword hook
 - [x] Use authenticated user instead of MOCK_USER_ID // 2025-11-14: updated all API calls to use authenticated user from JWT tokens
 - [x] Root layout auth state management // 2025-11-14: implemented auth state listener and automatic redirect to sign-in when not authenticated
+- [x] Clear any local user/session state in the app (e.g. `user`, `session`). // 2025-11-14: useSignOut clears session, user, and full React Query cache
+- [x] Clear or reset cached data (React Query: clear queries for lists/items). // 2025-11-14: useSignOut resets all query caches
+- [x] Redirect the user to a public screen (e.g. login / welcome) after logout. // 2025-11-14: sign out redirects to /sign-in via router.replace()
+- [x] Ensure private screens cannot be accessed without a valid session (both frontend guard and backend AuthGuard). // 2025-11-14: automatic redirect + guards on both FE and BE
+- [x] After app restart, if no valid session is found, user must stay logged out. // 2025-11-14: session not present on reload keeps user logged out
 - [ ] (Optional) Email verification flow (Supabase built-in)

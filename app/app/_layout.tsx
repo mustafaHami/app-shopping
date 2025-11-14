@@ -26,7 +26,6 @@ function RootLayoutNav() {
   const router = useRouter();
   const { isInitialized } = useAuthStateChange();
   const { data: session, isLoading } = useSession();
-
   useEffect(() => {
     if (!isInitialized || isLoading) return;
 

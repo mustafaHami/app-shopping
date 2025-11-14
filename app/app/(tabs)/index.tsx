@@ -19,7 +19,7 @@ import { CreateListForm } from '@/src/features/lists/components/create-list-form
 import { EditListForm } from '@/src/features/lists/components/edit-list-form';
 import { List } from '@/src/features/lists/types';
 import { MAIN_COLOR } from '@/src/constants/theme';
-import { useCurrentUser } from '@/src/features/auth/hooks/use-auth';
+import { useCurrentUser, useSignOut } from '@/src/features/auth/hooks/use-auth';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -32,6 +32,7 @@ export default function HomeScreen() {
   const { data: currentUser } = useCurrentUser();
   const { data: lists, isLoading, error, refetch } = useLists();
   const deleteList = useDeleteList();
+  const { mutate: signOut, isPending: isSigningOut } = useSignOut();
 
   // Animation for search bar
   const searchBarHeight = useRef(new Animated.Value(0)).current;
@@ -126,13 +127,30 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Shopping Lists</Text>
+        <Text style={styles.headerTitle}>ShoppL</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.searchButton} onPress={toggleSearch} activeOpacity={0.7}>
             <Ionicons name={searchVisible ? 'close' : 'search'} size={24} color={MAIN_COLOR} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.createButton} onPress={() => setCreateModalVisible(true)}>
             <Ionicons name="add" size={28} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.createButton, { backgroundColor: '#eee', marginLeft: 8 }]}
+            onPress={() => {
+              signOut(undefined, {
+                onSuccess: () => {
+                  router.replace('/sign-in');
+                },
+                onError: () => {
+                  Alert.alert('Error', 'Sign out failed');
+                },
+              });
+            }}
+            disabled={isSigningOut}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="log-out-outline" size={20} color="#444" />
           </TouchableOpacity>
         </View>
       </View>

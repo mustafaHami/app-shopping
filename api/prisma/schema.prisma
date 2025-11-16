@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model List {
+  id          String       @id @default(uuid()) @db.Uuid
+  title       String
+  ownerId     String       @db.Uuid
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  description String?
+  items       Item[]
+  members     ListMember[]
+}
+
+model ListMember {
+  id      String   @id @default(uuid()) @db.Uuid
+  listId  String   @db.Uuid
+  userId  String   @db.Uuid
+  role    Role     @default(EDITOR)
+  addedAt DateTime @default(now())
+  list    List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, userId])
+}
+
+model Item {
+  id        String   @id @default(uuid()) @db.Uuid
+  listId    String   @db.Uuid
+  title     String
+  quantity  Float?
+  unit      String?
+  notes     String?
+  category  String?
+  checked   Boolean  @default(false)
+  position  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  userId    String?  @db.Uuid
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, userId])
+}
+
+enum Role {
+  OWNER
+  EDITOR
+}

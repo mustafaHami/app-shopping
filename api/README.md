@@ -36,17 +36,20 @@ $ npm install
 This project uses PostgreSQL with Prisma ORM. Make sure you have PostgreSQL installed and running.
 
 1. Create a `.env` file in the `api` directory:
+
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/shopping_list?schema=public"
 PORT=3000
 ```
 
 2. Run Prisma migrations:
+
 ```bash
 $ npx prisma migrate dev
 ```
 
 3. Generate Prisma client:
+
 ```bash
 $ npx prisma generate
 ```
@@ -148,3 +151,13 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Prisma command
+
+- **npx prisma db pull**: Checks the database connection and retrieves existing tables
+- **npx prisma generate**: Generates the TypeScript client
+- **npx prisma migrate dev --name <migration-name>**: Create a new migration based on schema.prisma and apply it to your database. (only dev)
+- **npx prisma migrate deploy**: Applique toutes les migrations qui ne sont pas encore appliquées (can use on prod, for sunchronise)
+- **npx prisma migrate reset**: Completely deletes the database, recreates all tables according to the migrations, and regenerates the client. (WARNING)
+- **npx prisma studio**: Opens a web interface to easily explore and modify the data.
+- **npx prisma migrate status**: Displays the migration status, only the migrations applicated

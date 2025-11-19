@@ -103,6 +103,18 @@ export default function ListDetailsScreen() {
         options={{
           title: list?.title || 'List Details',
           headerBackTitle: 'Lists',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => {
+                // Navigate to members screen
+                const router = require('expo-router').router;
+                router.push(`/list/${id}/members`);
+              }}
+              style={{ marginRight: 8 }}
+            >
+              <Ionicons name="people" size={24} color={MAIN_COLOR} />
+            </TouchableOpacity>
+          ),
         }}
       />
       {usedCategories.length > 0 && (

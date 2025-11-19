@@ -12,3 +12,4 @@ description: These rules apply globally to all requests sent to Cursor in this p
 - Avoid repetitions and unnecessary wording.
 - Stay concise and organized in all responses.
 - Once the implementation is complete, not necessary to explain what was completed
+- After generating a Prisma migration, quickly check that all tables exist before ALTER TABLE and that enums/types are not created/altered in the wrong order. Do not modify old migrations that are already deployed.

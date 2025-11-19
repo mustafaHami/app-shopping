@@ -44,4 +44,60 @@
 - [x] Redirect the user to a public screen (e.g. login / welcome) after logout. // 2025-11-14: sign out redirects to /sign-in via router.replace()
 - [x] Ensure private screens cannot be accessed without a valid session (both frontend guard and backend AuthGuard). // 2025-11-14: automatic redirect + guards on both FE and BE
 - [x] After app restart, if no valid session is found, user must stay logged out. // 2025-11-14: session not present on reload keeps user logged out
-- [ ] (Optional) Email verification flow (Supabase built-in)
+
+# Functional checklist — ShoppingList (Phase 3)
+
+## list sharing + member management + invitations.
+
+### 1. Members screen (for list owner)
+
+- [x] Add a "Members" button in the list detail screen. // 2025-11-19: added people icon in header
+- [x] Create a screen that displays:
+  - [x] Members (email + role). Members is all member accepted invitation. // 2025-11-19: members screen shows members list
+  - [x] Invitations (email + status: pending/declined) // 2025-11-19: invitations section shows all invitations
+  - [x] Change role (reader <-> writer) // 2025-11-19: swap icon button to change role
+  - [x] Add member // 2025-11-19: FAB button opens invite modal
+    - [x] Owner can search a user by email. // 2025-11-19: email input in invite modal
+    - [x] If found, owner can send an invitation with a selected role (reader/writer). // 2025-11-19: role selector and send button
+- [x] The list creator is implicitly the owner (not stored as a role, not editable). // 2025-11-19: owner stored in list.ownerId, not as ListMember
+- [x] Prevent:
+  - [x] inviting a user who is already a member // 2025-11-19: backend validation in members.service
+  - [x] re-sending an invitation that is still pending // 2025-11-19: backend validation in members.service
+- [x] Remove a member (should lose immediate access to the list) // 2025-11-19: trash icon removes member
+
+### 2. Invitations (for invited user)
+
+- [] Add an "Invitations" screen showing invitations:
+  - [] list name
+  - [] proposed role
+  - [] status
+- [] Each invitation must have:
+  - [] Accept button
+  - [] Decline button
+- [] Accept → user becomes a member with assigned role, invitation → accepted.
+- [] Decline → invitation → declined. User is NOT added to the list.
+
+### 3. Permissions in UI
+
+- [] Reader:
+  - [] Cannot add/edit/delete items
+  - [] Cannot check/uncheck items
+- [] Writer:
+  - [] Full access to items (except managing members)
+- [] Owner:
+  - [] Everything + manage members
+
+### 4. Improve list view to visually differentiate Own group and Shared group
+
+On the main lists screen, the user should see both:
+
+- [] Lists they created (owner) and Lists shared with them (where they are reader or writer)
+- [] Badges on each list (e.g. “Owner”, “Shared • Reader”, “Shared • Writer”), and showing the owner for shared lists.
+- [] Add three sections ("All",“My lists” and “Shared with me”),
+
+## Notes
+
+- [] Keep code minimal, clean, aligned with existing architecture.
+- [] Respect the frontend + backend folder structure and rules.
+- [] Use Zod on the frontend and class-validator on the backend.
+- [] Do not create extra files unless necessary for this feature.

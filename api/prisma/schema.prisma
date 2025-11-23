@@ -21,12 +21,13 @@ model List {
 }
 
 model ListMember {
-  id      String   @id @default(uuid()) @db.Uuid
-  listId  String   @db.Uuid
-  userId  String   @db.Uuid
-  role    Role     @default(WRITER)
-  addedAt DateTime @default(now())
-  list    List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid()) @db.Uuid
+  listId    String   @db.Uuid
+  userId    String   @db.Uuid
+  userEmail String?
+  role      Role     @default(WRITER)
+  addedAt   DateTime @default(now())
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@unique([listId, userId])
 }

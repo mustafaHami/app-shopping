@@ -11,6 +11,9 @@ export const useListMembers = (listId: string) => {
     queryKey: ['members', 'list', listId],
     queryFn: () => membersApi.getListMembers(listId),
     enabled: !!listId,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 };
 
@@ -58,6 +61,9 @@ export const useMyInvitations = () => {
   return useQuery({
     queryKey: ['invitations', 'my'],
     queryFn: () => membersApi.getMyInvitations(),
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider data stale
   });
 };
 

@@ -67,37 +67,31 @@
 
 ### 2. Invitations (for invited user)
 
-- [] Add an "Invitations" screen showing invitations:
-  - [] list name
-  - [] proposed role
-  - [] status
-- [] Each invitation must have:
-  - [] Accept button
-  - [] Decline button
-- [] Accept → user becomes a member with assigned role, invitation → accepted.
-- [] Decline → invitation → declined. User is NOT added to the list.
+- [x] Add an "Invitations" screen showing invitations: // 2025-11-19: created invitations tab screen
+  - [x] list name // 2025-11-19: shows list title in card
+  - [x] proposed role // 2025-11-19: role badge shown (READER/WRITER)
+  - [x] status // 2025-11-19: status badge with color coding
+- [x] Each invitation must have: // 2025-11-19: buttons shown for pending invitations
+  - [x] Accept button // 2025-11-19: green accept button with icon
+  - [x] Decline button // 2025-11-19: decline button with confirmation
+- [x] Accept → user becomes a member with assigned role, invitation → accepted. // 2025-11-19: backend creates ListMember on accept
+- [x] Decline → invitation → declined. User is NOT added to the list. // 2025-11-19: only updates status, no member created
+- [x] After choosing one of the two options, We delete the invitation. of the list. // 2025-11-19: invitation deleted from DB after accept/decline
 
 ### 3. Permissions in UI
 
-- [] Reader:
-  - [] Cannot add/edit/delete items
-  - [] Cannot check/uncheck items
-- [] Writer:
-  - [] Full access to items (except managing members)
-- [] Owner:
-  - [] Everything + manage members
+- [x] Reader: // 2025-11-23: permissions enforced in backend and frontend
+  - [x] Cannot add/edit/delete items // 2025-11-23: UI hidden, backend checks permission
+  - [x] Cannot check/uncheck items // 2025-11-23: checkbox disabled for readers
+- [x] Writer: // 2025-11-23: full item access granted
+  - [x] Full access to items (except managing members) // 2025-11-23: can add/edit/delete/check items
+- [x] Owner: // 2025-11-23: all permissions granted
+  - [x] Everything + manage members // 2025-11-23: members button only visible to owner
 
 ### 4. Improve list view to visually differentiate Own group and Shared group
 
 On the main lists screen, the user should see both:
 
-- [] Lists they created (owner) and Lists shared with them (where they are reader or writer)
-- [] Badges on each list (e.g. “Owner”, “Shared • Reader”, “Shared • Writer”), and showing the owner for shared lists.
-- [] Add three sections ("All",“My lists” and “Shared with me”),
-
-## Notes
-
-- [] Keep code minimal, clean, aligned with existing architecture.
-- [] Respect the frontend + backend folder structure and rules.
-- [] Use Zod on the frontend and class-validator on the backend.
-- [] Do not create extra files unless necessary for this feature.
+- [x] Lists they created (owner) and Lists shared with them (where they are reader or writer) // 2025-11-23: backend returns all accessible lists with userRole
+- [x] Badges on each list (e.g. "Owner", "Shared • Reader", "Shared • Writer"), and showing the owner for shared lists. // 2025-11-23: badges added to list cards
+- [x] Add three sections ("All","My lists" and "Shared with me"), // 2025-11-23: added filter tabs to quickly switch between all/my/shared lists

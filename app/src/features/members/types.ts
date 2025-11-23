@@ -6,6 +6,7 @@ export interface ListMember {
   id: string;
   listId: string;
   userId: string;
+  userEmail?: string;
   role: Role;
   addedAt: string;
 }

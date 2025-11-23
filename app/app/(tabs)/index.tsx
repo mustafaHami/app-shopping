@@ -21,6 +21,8 @@ import { List } from '@/src/features/lists/types';
 import { MAIN_COLOR } from '@/src/constants/theme';
 import { useCurrentUser, useSignOut } from '@/src/features/auth/hooks/use-auth';
 
+type ListFilter = 'all' | 'my' | 'shared';
+
 export default function HomeScreen() {
   const router = useRouter();
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -28,6 +30,7 @@ export default function HomeScreen() {
   const [selectedList, setSelectedList] = useState<List | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [listFilter, setListFilter] = useState<ListFilter>('all');
 
   const { data: currentUser } = useCurrentUser();
   const { data: lists, isLoading, error, refetch } = useLists();
@@ -45,13 +48,26 @@ export default function HomeScreen() {
     }, [refetch]),
   );
 
-  // Filter lists by search query
+  // Filter lists by search query and filter type
   const filteredLists = useMemo(() => {
     if (!lists) return [];
-    if (!searchQuery.trim()) return lists;
-    const query = searchQuery.toLowerCase().trim();
-    return lists.filter(list => list.title.toLowerCase().includes(query));
-  }, [lists, searchQuery]);
+
+    // First filter by ownership
+    let filtered = lists;
+    if (listFilter === 'my') {
+      filtered = lists.filter(list => list.userRole === 'OWNER');
+    } else if (listFilter === 'shared') {
+      filtered = lists.filter(list => list.userRole === 'READER' || list.userRole === 'WRITER');
+    }
+
+    // Then filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(list => list.title.toLowerCase().includes(query));
+    }
+
+    return filtered;
+  }, [lists, searchQuery, listFilter]);
 
   // Toggle search bar with animation
   const toggleSearch = () => {
@@ -153,6 +169,39 @@ export default function HomeScreen() {
             <Ionicons name="log-out-outline" size={20} color="#444" />
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Filter Tabs */}
+      <View style={styles.filterTabsContainer}>
+        <TouchableOpacity
+          style={[styles.filterTab, listFilter === 'all' && styles.filterTabActive]}
+          onPress={() => setListFilter('all')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.filterTabText, listFilter === 'all' && styles.filterTabTextActive]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterTab, listFilter === 'my' && styles.filterTabActive]}
+          onPress={() => setListFilter('my')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.filterTabText, listFilter === 'my' && styles.filterTabTextActive]}>
+            My Lists
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterTab, listFilter === 'shared' && styles.filterTabActive]}
+          onPress={() => setListFilter('shared')}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={[styles.filterTabText, listFilter === 'shared' && styles.filterTabTextActive]}
+          >
+            Shared with me
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <Animated.View
@@ -309,6 +358,34 @@ const styles = StyleSheet.create({
   clearButton: {
     marginLeft: 8,
     padding: 4,
+  },
+  filterTabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+  },
+  filterTabActive: {
+    backgroundColor: MAIN_COLOR,
+  },
+  filterTabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+  },
+  filterTabTextActive: {
+    color: '#fff',
   },
   listContent: {
     padding: 16,

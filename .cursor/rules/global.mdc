@@ -1,6 +1,6 @@
 ---
+description: The overall rules must be respected for each request.
 alwaysApply: true
-description: These rules apply globally to all requests sent to Cursor in this project.
 ---
 
 # Title: Concise Execution Rules for Cursor

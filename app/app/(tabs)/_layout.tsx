@@ -21,6 +21,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="list" size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="invitations"
+        options={{
+          title: 'Invitations',
+          tabBarIcon: ({ color, size }) => <Ionicons name="mail" size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

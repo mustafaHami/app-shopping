@@ -12,23 +12,55 @@ import { UpdateItemDto } from './dto/update-item.dto';
 export class ItemsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createItemDto: CreateItemDto, userId: string) {
-    // Check if user has access to the list
+  private async checkWritePermission(listId: string, userId: string) {
     const list = await this.prisma.list.findUnique({
-      where: { id: createItemDto.listId },
+      where: { id: listId },
       include: { members: true },
     });
 
     if (!list) {
-      throw new NotFoundException(`List with ID ${createItemDto.listId} not found`);
+      throw new NotFoundException(`List with ID ${listId} not found`);
     }
 
-    const hasAccess =
-      list.ownerId === userId || list.members.some(member => member.userId === userId);
+    // Check if user is owner
+    if (list.ownerId === userId) {
+      return; // Owner has all permissions
+    }
 
-    if (!hasAccess) {
+    // Check if user is a member
+    const member = list.members.find(m => m.userId === userId);
+    if (!member) {
       throw new ForbiddenException('You do not have access to this list');
     }
+
+    // Check if member has write permission
+    if (member.role === 'READER') {
+      throw new ForbiddenException('You do not have permission to modify items in this list');
+    }
+  }
+
+  private async checkReadPermission(listId: string, userId: string) {
+    const list = await this.prisma.list.findUnique({
+      where: { id: listId },
+      include: { members: true },
+    });
+
+    if (!list) {
+      throw new NotFoundException(`List with ID ${listId} not found`);
+    }
+
+    // Check if user is owner or member (any role can read and toggle)
+    const isOwner = list.ownerId === userId;
+    const isMember = list.members.some(m => m.userId === userId);
+
+    if (!isOwner && !isMember) {
+      throw new ForbiddenException('You do not have access to this list');
+    }
+  }
+
+  async create(createItemDto: CreateItemDto, userId: string) {
+    // Check write permission
+    await this.checkWritePermission(createItemDto.listId, userId);
 
     // Check for duplicate item title in the same list
     const existingItem = await this.prisma.item.findFirst({
@@ -109,6 +141,9 @@ export class ItemsService {
     // Check if user has access
     const existingItem = await this.findOne(id, userId);
 
+    // Check write permission
+    await this.checkWritePermission(existingItem.listId, userId);
+
     // If title is being updated, check for duplicate title in the same list
     if (updateItemDto.title && updateItemDto.title !== existingItem.title) {
       const duplicateItem = await this.prisma.item.findFirst({
@@ -136,7 +171,10 @@ export class ItemsService {
 
   async remove(id: string, userId: string) {
     // Check if user has access
-    await this.findOne(id, userId);
+    const item = await this.findOne(id, userId);
+
+    // Check write permission
+    await this.checkWritePermission(item.listId, userId);
 
     await this.prisma.item.delete({
       where: { id },
@@ -147,6 +185,9 @@ export class ItemsService {
 
   async toggleChecked(id: string, userId: string) {
     const item = await this.findOne(id, userId);
+
+    // Check read permission (all roles including READER can toggle)
+    await this.checkReadPermission(item.listId, userId);
 
     const updatedItem = await this.prisma.item.update({
       where: { id },

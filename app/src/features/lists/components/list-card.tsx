@@ -19,11 +19,27 @@ export function ListCard({ list, onPress, onEdit, onDelete }: ListCardProps) {
     year: 'numeric',
   });
 
+  const getBadgeLabel = () => {
+    if (list.userRole === 'OWNER') return 'Owner';
+    if (list.userRole === 'WRITER') return 'Shared • Writer';
+    if (list.userRole === 'READER') return 'Shared • Reader';
+    return null;
+  };
+
+  const badgeLabel = getBadgeLabel();
+
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(list)} activeOpacity={0.7}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>{list.title}</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{list.title}</Text>
+            {badgeLabel && (
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>{badgeLabel}</Text>
+              </View>
+            )}
+          </View>
           <View style={styles.buttonContainer}>
             {onEdit && (
               <TouchableOpacity
@@ -80,12 +96,28 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 6,
   },
-  title: {
+  titleContainer: {
     flex: 1,
+    marginRight: 12,
+  },
+  title: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1a1a1a',
-    marginRight: 12,
+    marginBottom: 6,
+  },
+  badgeContainer: {
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#666',
+    textTransform: 'uppercase',
   },
   description: {
     fontSize: 14,

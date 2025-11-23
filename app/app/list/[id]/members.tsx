@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +22,7 @@ import {
 } from '@/src/features/members/hooks/use-members';
 import { MAIN_COLOR, ERROR_COLOR } from '@/src/constants/theme';
 import type { ListMember, Invitation } from '@/src/features/members/types';
+import { RoleBadge } from '@/src/components/ui/RoleBadge';
 
 export default function MembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,7 +30,7 @@ export default function MembersScreen() {
   const [inviteeEmail, setInviteeEmail] = useState('');
   const [selectedRole, setSelectedRole] = useState<'READER' | 'WRITER'>('READER');
 
-  const { data: membersData, isLoading } = useListMembers(id!);
+  const { data: membersData, isLoading, refetch, isRefetching } = useListMembers(id!);
   const sendInvitation = useSendInvitation();
   const updateMemberRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
@@ -126,7 +128,17 @@ export default function MembersScreen() {
           headerBackTitle: 'Back',
         }}
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={MAIN_COLOR}
+            colors={[MAIN_COLOR]}
+          />
+        }
+      >
         {/* Members Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Members</Text>
@@ -136,8 +148,8 @@ export default function MembersScreen() {
                 <View style={styles.cardContent}>
                   <Ionicons name="person" size={24} color={MAIN_COLOR} />
                   <View style={styles.cardInfo}>
-                    <Text style={styles.cardEmail}>{member.userId}</Text>
-                    <Text style={styles.cardRole}>{member.role}</Text>
+                    <Text style={styles.cardEmail}>{member.userEmail}</Text>
+                    <RoleBadge role={member.role} />
                   </View>
                 </View>
                 <View style={styles.cardActions}>
@@ -182,9 +194,7 @@ export default function MembersScreen() {
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardEmail}>{invitation.inviteeEmail}</Text>
                     <View style={styles.invitationMeta}>
-                      <View style={styles.roleBadge}>
-                        <Text style={styles.roleBadgeText}>{invitation.role}</Text>
-                      </View>
+                      <RoleBadge role={invitation.role} />
                       <View
                         style={[
                           styles.statusBadge,
@@ -354,26 +364,11 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     marginBottom: 4,
   },
-  cardRole: {
-    fontSize: 14,
-    color: '#666',
-  },
   invitationMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginTop: 4,
-  },
-  roleBadge: {
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-  },
-  roleBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1976D2',
   },
   statusBadge: {
     paddingHorizontal: 8,

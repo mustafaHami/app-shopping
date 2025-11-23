@@ -46,7 +46,24 @@ export class ListsService {
       },
     });
 
-    return lists;
+    // Add user role to each list
+    return lists.map(list => {
+      let userRole: 'OWNER' | 'READER' | 'WRITER' = 'READER';
+
+      if (list.ownerId === userId) {
+        userRole = 'OWNER';
+      } else {
+        const member = list.members.find(m => m.userId === userId);
+        if (member) {
+          userRole = member.role as 'READER' | 'WRITER';
+        }
+      }
+
+      return {
+        ...list,
+        userRole,
+      };
+    });
   }
 
   async findOne(id: string, userId: string) {
@@ -70,7 +87,22 @@ export class ListsService {
       throw new ForbiddenException('You do not have access to this list');
     }
 
-    return list;
+    // Determine user role
+    let userRole: 'OWNER' | 'READER' | 'WRITER' = 'READER';
+
+    if (list.ownerId === userId) {
+      userRole = 'OWNER';
+    } else {
+      const member = list.members.find(m => m.userId === userId);
+      if (member) {
+        userRole = member.role as 'READER' | 'WRITER';
+      }
+    }
+
+    return {
+      ...list,
+      userRole,
+    };
   }
 
   async update(id: string, userId: string, updateListDto: UpdateListDto) {

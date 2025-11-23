@@ -5,6 +5,7 @@ export interface List {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  userRole?: 'OWNER' | 'WRITER' | 'READER';
   items?: Item[];
   members?: ListMember[];
 }

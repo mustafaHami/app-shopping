@@ -244,24 +244,32 @@ export class MembersService {
       throw new BadRequestException('This invitation has already been processed');
     }
 
-    // Update invitation status
-    const updatedInvitation = await this.prisma.invitation.update({
-      where: { id: invitationId },
-      data: { status: dto.status },
-    });
-
     // If accepted, create a list member
     if (dto.status === InvitationStatus.ACCEPTED) {
+      const userEmail = invitation.inviteeEmail;
+      if (!userEmail) throw new NotFoundException('User not found');
       await this.prisma.listMember.create({
         data: {
           listId: invitation.listId,
           userId: invitation.inviteeId,
+          userEmail,
           role: invitation.role,
         },
       });
     }
 
-    return updatedInvitation;
+    // Delete the invitation after processing (accept or decline)
+    await this.prisma.invitation.delete({
+      where: { id: invitationId },
+    });
+
+    return {
+      message:
+        dto.status === InvitationStatus.ACCEPTED
+          ? 'Invitation accepted successfully'
+          : 'Invitation declined successfully',
+      status: dto.status,
+    };
   }
 
   // Cancel invitation (owner only)

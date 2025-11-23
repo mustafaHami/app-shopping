@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useItems, useDeleteItem, useToggleItem } from '@/src/features/items/hooks/use-items';
 import { useList } from '@/src/features/lists/hooks/use-lists';
@@ -18,6 +19,7 @@ import { Item } from '@/src/features/items/types';
 import { CreateItemForm } from '@/src/features/items/components/create-item-form';
 import { EditItemForm } from '@/src/features/items/components/edit-item-form';
 import { MAIN_COLOR, ERROR_COLOR } from '@/src/constants/theme';
+import { canManageMembers, canCheckItems, canAddEditDeleteItems } from '@/src/utils/permissions';
 
 export default function ListDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,11 +28,34 @@ export default function ListDetailsScreen() {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
 
-  const { data: list, isLoading: listLoading } = useList(id!);
-  const { data: items, isLoading: itemsLoading, error } = useItems(id!);
+  const {
+    data: list,
+    isLoading: listLoading,
+    refetch: refetchList,
+    isRefetching: isRefetchingList,
+  } = useList(id!);
+  const {
+    data: items,
+    isLoading: itemsLoading,
+    error,
+    refetch: refetchItems,
+    isRefetching: isRefetchingItems,
+  } = useItems(id!);
   const { data: categories } = useCategories();
   const deleteItem = useDeleteItem();
   const toggleItem = useToggleItem();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchList();
+      refetchItems();
+    }, [refetchList, refetchItems]),
+  );
+
+  const handleRefresh = useCallback(() => {
+    refetchList();
+    refetchItems();
+  }, [refetchList, refetchItems]);
 
   // Get all category names (from global categories DB)
   const allCategoryNames = useMemo(() => {
@@ -54,6 +79,10 @@ export default function ListDetailsScreen() {
   }, [items, categoryFilter]);
 
   const handleToggleCheck = async (item: Item) => {
+    if (!canCheckItems(list)) {
+      Alert.alert('Permission Denied', 'You do not have permission to check/uncheck items');
+      return;
+    }
     try {
       await toggleItem.mutateAsync({ id: item.id, listId: id! });
     } catch (_error) {
@@ -62,6 +91,10 @@ export default function ListDetailsScreen() {
   };
 
   const handleDeleteItem = (item: Item) => {
+    if (!canAddEditDeleteItems(list)) {
+      Alert.alert('Permission Denied', 'You do not have permission to delete items');
+      return;
+    }
     Alert.alert('Delete Item', `Are you sure you want to delete "${item.title}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -103,18 +136,19 @@ export default function ListDetailsScreen() {
         options={{
           title: list?.title || 'List Details',
           headerBackTitle: 'Lists',
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => {
-                // Navigate to members screen
-                const router = require('expo-router').router;
-                router.push(`/list/${id}/members`);
-              }}
-              style={{ marginRight: 8 }}
-            >
-              <Ionicons name="people" size={24} color={MAIN_COLOR} />
-            </TouchableOpacity>
-          ),
+          headerRight: () =>
+            canManageMembers(list) ? (
+              <TouchableOpacity
+                onPress={() => {
+                  // Navigate to members screen
+                  const router = require('expo-router').router;
+                  router.push(`/list/${id}/members`);
+                }}
+                style={{ marginRight: 8 }}
+              >
+                <Ionicons name="people" size={24} color={MAIN_COLOR} />
+              </TouchableOpacity>
+            ) : null,
         }}
       />
       {usedCategories.length > 0 && (
@@ -171,6 +205,7 @@ export default function ListDetailsScreen() {
               <TouchableOpacity
                 style={styles.checkboxContainer}
                 onPress={() => handleToggleCheck(item)}
+                disabled={!canCheckItems(list)}
               >
                 <Ionicons
                   name={item.checked ? 'checkbox' : 'square-outline'}
@@ -190,31 +225,43 @@ export default function ListDetailsScreen() {
                 </View>
                 {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
               </View>
-              <View style={styles.itemActions}>
-                <TouchableOpacity
-                  style={styles.editIconButton}
-                  onPress={() => {
-                    setSelectedItem(item);
-                    setEditModalVisible(true);
-                  }}
-                >
-                  <Ionicons name="pencil" size={18} color={MAIN_COLOR} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.deleteIconButton}
-                  onPress={() => handleDeleteItem(item)}
-                >
-                  <Ionicons name="trash" size={18} color={ERROR_COLOR} />
-                </TouchableOpacity>
-              </View>
+              {canAddEditDeleteItems(list) && (
+                <View style={styles.itemActions}>
+                  <TouchableOpacity
+                    style={styles.editIconButton}
+                    onPress={() => {
+                      setSelectedItem(item);
+                      setEditModalVisible(true);
+                    }}
+                  >
+                    <Ionicons name="pencil" size={18} color={MAIN_COLOR} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteIconButton}
+                    onPress={() => handleDeleteItem(item)}
+                  >
+                    <Ionicons name="trash" size={18} color={ERROR_COLOR} />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           )}
           contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetchingList || isRefetchingItems}
+              onRefresh={handleRefresh}
+              tintColor={MAIN_COLOR}
+              colors={[MAIN_COLOR]}
+            />
+          }
         />
       )}
-      <TouchableOpacity style={styles.fab} onPress={() => setCreateModalVisible(true)}>
-        <Ionicons name="add" size={32} color="#fff" />
-      </TouchableOpacity>
+      {canAddEditDeleteItems(list) && (
+        <TouchableOpacity style={styles.fab} onPress={() => setCreateModalVisible(true)}>
+          <Ionicons name="add" size={32} color="#fff" />
+        </TouchableOpacity>
+      )}
       <CreateItemForm
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}

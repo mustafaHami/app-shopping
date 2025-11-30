@@ -3,14 +3,19 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseService } from '../auth/supabase.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 
 @Injectable()
 export class ItemsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private supabase: SupabaseService,
+  ) {}
 
   private async checkWritePermission(listId: string, userId: string) {
     const list = await this.prisma.list.findUnique({
@@ -209,5 +214,104 @@ export class ItemsService {
     });
 
     return updatedItem;
+  }
+
+  async uploadImage(
+    id: string,
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<{ imageUrl: string }> {
+    // Check if user has access and write permission
+    const item = await this.findOne(id, userId);
+    await this.checkWritePermission(item.listId, userId);
+
+    // Validate file type
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Invalid file type. Only JPEG, PNG, and WebP images are allowed.',
+      );
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      throw new BadRequestException('File size exceeds 10MB limit.');
+    }
+
+    // Delete old image if exists
+    if (item.imageUrl) {
+      try {
+        const oldPath = this.extractPathFromUrl(item.imageUrl);
+        if (oldPath) {
+          await this.supabase.deleteImage('item-images', oldPath);
+        }
+      } catch (error) {
+        console.error('Failed to delete old image:', error);
+        // Continue with upload even if deletion fails
+      }
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(7);
+    const extension = file.originalname.split('.').pop() || 'jpg';
+    const filename = `${userId}/${timestamp}-${randomStr}.${extension}`;
+
+    // Upload to Supabase Storage
+    const imageUrl = await this.supabase.uploadImage(
+      'item-images',
+      filename,
+      file.buffer,
+      file.mimetype,
+    );
+
+    // Update item with new image URL
+    await this.prisma.item.update({
+      where: { id },
+      data: { imageUrl },
+    });
+
+    return { imageUrl };
+  }
+
+  async deleteImage(id: string, userId: string): Promise<{ message: string }> {
+    // Check if user has access and write permission
+    const item = await this.findOne(id, userId);
+    await this.checkWritePermission(item.listId, userId);
+
+    if (!item.imageUrl) {
+      throw new NotFoundException('Item does not have an image');
+    }
+
+    // Delete from Supabase Storage
+    try {
+      const path = this.extractPathFromUrl(item.imageUrl);
+      if (path) {
+        await this.supabase.deleteImage('item-images', path);
+      }
+    } catch (error) {
+      console.error('Failed to delete image from storage:', error);
+      // Continue with database update even if storage deletion fails
+    }
+
+    // Update item to remove image URL
+    await this.prisma.item.update({
+      where: { id },
+      data: { imageUrl: null },
+    });
+
+    return { message: 'Image deleted successfully' };
+  }
+
+  private extractPathFromUrl(url: string): string | null {
+    try {
+      // Extract path from Supabase URL
+      // Format: https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
+      const match = url.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/);
+      return match ? match[1] : null;
+    } catch {
+      return null;
+    }
   }
 }

@@ -8,7 +8,10 @@ import {
   Delete,
   UseGuards,
   Logger,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ItemsService } from './items.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
@@ -64,5 +67,20 @@ export class ItemsController {
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
     return this.itemsService.remove(id, user.id);
+  }
+
+  @Post(':id/image')
+  @UseInterceptors(FileInterceptor('image'))
+  uploadImage(
+    @Param('id') id: string,
+    @CurrentUser() user: CurrentUserData,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.itemsService.uploadImage(id, user.id, file);
+  }
+
+  @Delete(':id/image')
+  deleteImage(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
+    return this.itemsService.deleteImage(id, user.id);
   }
 }

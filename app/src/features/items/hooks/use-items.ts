@@ -143,3 +143,38 @@ export function useDeleteItem() {
     },
   });
 }
+
+export function useUploadItemImage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, imageUri, listId }: { id: string; imageUri: string; listId: string }) =>
+      itemsApi.uploadImage(id, imageUri),
+    onSuccess: (data, variables) => {
+      // Update the item in the cache with the new image URL
+      queryClient.setQueryData<Item[]>([ITEMS_QUERY_KEY, variables.listId], old => {
+        if (!old) return old;
+        return old.map(item =>
+          item.id === variables.id ? { ...item, imageUrl: data.imageUrl } : item,
+        );
+      });
+    },
+  });
+}
+
+export function useDeleteItemImage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, listId }: { id: string; listId: string }) => itemsApi.deleteImage(id),
+    onSuccess: (_, variables) => {
+      // Remove the image URL from the item in the cache
+      queryClient.setQueryData<Item[]>([ITEMS_QUERY_KEY, variables.listId], old => {
+        if (!old) return old;
+        return old.map(item =>
+          item.id === variables.id ? { ...item, imageUrl: undefined } : item,
+        );
+      });
+    },
+  });
+}

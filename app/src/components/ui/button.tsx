@@ -67,12 +67,12 @@ export function Button({
 const styles = StyleSheet.create({
   button: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 6,
+    minHeight: 48,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -91,8 +91,8 @@ const styles = StyleSheet.create({
     backgroundColor: ERROR_COLOR,
   },
   primaryDisabled: {
-    backgroundColor: '#C7E0FF',
-    opacity: 0.7,
+    backgroundColor: '#A5D6A7',
+    opacity: 0.6,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -109,8 +109,8 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   buttonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   primaryText: {

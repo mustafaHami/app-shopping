@@ -44,7 +44,7 @@ export const useSignUp = () => {
       // Create default list for new user
       try {
         await listsApi.create({
-          title: 'My Shopping List',
+          title: 'First list',
           description: 'Your first shopping list',
         });
         // Invalidate lists query to show the new default list

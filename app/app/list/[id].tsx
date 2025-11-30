@@ -20,6 +20,7 @@ import {
   useToggleItem,
   useCreateItem,
   useUpdateQuantity,
+  useUploadItemImage,
 } from '@/src/features/items/hooks/use-items';
 import { useList } from '@/src/features/lists/hooks/use-lists';
 import { useCategories } from '@/src/features/categories/hooks/use-categories';
@@ -27,6 +28,8 @@ import { Item } from '@/src/features/items/types';
 import { ItemCard } from '@/src/features/items/components/item-card';
 import { CreateItemForm } from '@/src/features/items/components/create-item-form';
 import { EditItemForm } from '@/src/features/items/components/edit-item-form';
+import { ImagePickerModal } from '@/src/features/items/components/image-picker-modal';
+import { ImageViewerModal } from '@/src/features/items/components/image-viewer-modal';
 import { MAIN_COLOR, ERROR_COLOR } from '@/src/constants/theme';
 import { canManageMembers, canCheckItems, canAddEditDeleteItems } from '@/src/utils/permissions';
 
@@ -39,6 +42,8 @@ export default function ListDetailsScreen() {
   const [quickAddText, setQuickAddText] = useState('');
   const [purchasedExpanded, setPurchasedExpanded] = useState(false);
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  const [showImagePickerForItem, setShowImagePickerForItem] = useState<Item | null>(null);
+  const [viewImageForItem, setViewImageForItem] = useState<Item | null>(null);
   const quickAddInputRef = useRef<TextInput>(null);
 
   const {
@@ -59,6 +64,7 @@ export default function ListDetailsScreen() {
   const toggleItem = useToggleItem();
   const createItem = useCreateItem();
   const updateQuantity = useUpdateQuantity();
+  const uploadImage = useUploadItemImage();
 
   // Auto-focus quick add field when screen loads (only once on mount)
   useFocusEffect(
@@ -206,6 +212,29 @@ export default function ListDetailsScreen() {
         },
       },
     );
+  };
+
+  const handleImagePlaceholderPress = (item: Item) => {
+    setShowImagePickerForItem(item);
+  };
+
+  const handleImagePress = (item: Item) => {
+    setViewImageForItem(item);
+  };
+
+  const handleImageSelected = async (uri: string) => {
+    if (!showImagePickerForItem) return;
+
+    try {
+      await uploadImage.mutateAsync({
+        id: showImagePickerForItem.id,
+        imageUri: uri,
+        listId: id!,
+      });
+      setShowImagePickerForItem(null);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to upload image');
+    }
   };
 
   if (listLoading || itemsLoading) {
@@ -380,6 +409,10 @@ export default function ListDetailsScreen() {
                 onDecreaseQuantity={
                   canAddEditDeleteItems(list) ? handleDecreaseQuantity : undefined
                 }
+                onImagePlaceholderPress={
+                  canAddEditDeleteItems(list) ? handleImagePlaceholderPress : undefined
+                }
+                onImagePress={handleImagePress}
                 canCheck={canCheckItems(list)}
                 canEdit={canAddEditDeleteItems(list)}
                 isUpdatingQuantity={updatingItemId === item.id}
@@ -422,6 +455,10 @@ export default function ListDetailsScreen() {
                       onDecreaseQuantity={
                         canAddEditDeleteItems(list) ? handleDecreaseQuantity : undefined
                       }
+                      onImagePlaceholderPress={
+                        canAddEditDeleteItems(list) ? handleImagePlaceholderPress : undefined
+                      }
+                      onImagePress={handleImagePress}
                       canCheck={canCheckItems(list)}
                       canEdit={canAddEditDeleteItems(list)}
                       isUpdatingQuantity={updatingItemId === item.id || isRefetchingItems}
@@ -450,6 +487,17 @@ export default function ListDetailsScreen() {
           }}
           item={selectedItem}
           allCategories={allCategoryNames}
+        />
+        <ImagePickerModal
+          visible={!!showImagePickerForItem}
+          onClose={() => setShowImagePickerForItem(null)}
+          onImageSelected={handleImageSelected}
+        />
+        <ImageViewerModal
+          visible={!!viewImageForItem}
+          imageUrl={viewImageForItem?.imageUrl || null}
+          itemTitle={viewImageForItem?.title}
+          onClose={() => setViewImageForItem(null)}
         />
       </View>
     </GestureHandlerRootView>

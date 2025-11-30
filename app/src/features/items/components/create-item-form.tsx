@@ -9,11 +9,16 @@ import {
   Platform,
   Alert,
   ScrollView,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import { useCreateItem } from '../hooks/use-items';
+import { Ionicons } from '@expo/vector-icons';
+import { useCreateItem, useUploadItemImage } from '../hooks/use-items';
 import { Button } from '@/src/components/ui/button';
 import { ERROR_COLOR, MAIN_COLOR } from '@/src/constants/theme';
 import { CategorySelector } from './category-selector';
+import { ImagePickerModal } from './image-picker-modal';
 
 interface CreateItemFormProps {
   visible: boolean;
@@ -29,7 +34,10 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
   const [notes, setNotes] = useState('');
   const [category, setCategory] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [imageUri, setImageUri] = useState<string | undefined>(undefined);
+  const [showImagePicker, setShowImagePicker] = useState(false);
   const createItem = useCreateItem();
+  const uploadImage = useUploadItemImage();
 
   const resetForm = () => {
     setTitle('');
@@ -38,6 +46,7 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
     setNotes('');
     setCategory('');
     setErrorMessage('');
+    setImageUri(undefined);
   };
 
   const handleSubmit = async () => {
@@ -59,7 +68,22 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
       if (unit.trim()) payload.unit = unit.trim();
       if (notes.trim()) payload.notes = notes.trim();
       if (category.trim()) payload.category = category.trim();
-      await createItem.mutateAsync(payload);
+
+      const newItem = await createItem.mutateAsync(payload);
+
+      // Handle image upload if an image was selected
+      if (imageUri) {
+        try {
+          await uploadImage.mutateAsync({
+            id: newItem.id,
+            imageUri,
+            listId,
+          });
+        } catch (error: any) {
+          Alert.alert('Warning', 'Item created but image upload failed: ' + error.message);
+        }
+      }
+
       resetForm();
       onClose();
     } catch (error: any) {
@@ -73,6 +97,10 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
     }
   };
 
+  const handleImageSelected = (uri: string) => {
+    setImageUri(uri);
+  };
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
@@ -83,6 +111,46 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
           <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={styles.modalTitle}>Add New Item</Text>
             <Text style={styles.errorMessage}>{errorMessage}</Text>
+
+            {/* Image Section */}
+            <View style={styles.imageSection}>
+              <Text style={styles.label}>Item Image</Text>
+              {imageUri ? (
+                <View style={styles.imageContainer}>
+                  <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+                  <View style={styles.imageActions}>
+                    <TouchableOpacity
+                      style={styles.imageActionButton}
+                      onPress={() => setShowImagePicker(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="swap-horizontal" size={20} color={MAIN_COLOR} />
+                      <Text style={styles.imageActionText}>Replace</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.imageActionButton, styles.imageActionButtonDelete]}
+                      onPress={() => setImageUri(undefined)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="trash" size={20} color={ERROR_COLOR} />
+                      <Text style={[styles.imageActionText, styles.imageActionTextDelete]}>
+                        Remove
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.imagePlaceholder}
+                  onPress={() => setShowImagePicker(true)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="image-outline" size={48} color="#ccc" />
+                  <Text style={styles.imagePlaceholderText}>Tap to add image</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             <Text style={styles.label}>
               Item Name <Text style={styles.required}>*</Text>
             </Text>
@@ -143,12 +211,17 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
                 title="Add Item"
                 onPress={handleSubmit}
                 disabled={!title.trim() || !quantity.trim()}
-                loading={createItem.isPending}
+                loading={createItem.isPending || uploadImage.isPending}
               />
             </View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
+      <ImagePickerModal
+        visible={showImagePicker}
+        onClose={() => setShowImagePicker(false)}
+        onImageSelected={handleImageSelected}
+      />
     </Modal>
   );
 }
@@ -211,5 +284,61 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     marginTop: 24,
+  },
+  imageSection: {
+    marginBottom: 20,
+  },
+  imageContainer: {
+    alignItems: 'center',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#f0f0f0',
+  },
+  imageActions: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 12,
+  },
+  imageActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    gap: 6,
+  },
+  imageActionButtonDelete: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: ERROR_COLOR,
+  },
+  imageActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: MAIN_COLOR,
+  },
+  imageActionTextDelete: {
+    color: ERROR_COLOR,
+  },
+  imagePlaceholder: {
+    width: '100%',
+    height: 150,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fafafa',
+  },
+  imagePlaceholderText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: '#999',
+    fontWeight: '500',
   },
 });

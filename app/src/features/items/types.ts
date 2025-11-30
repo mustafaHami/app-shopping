@@ -8,6 +8,7 @@ export interface Item {
   category?: string;
   checked: boolean;
   position?: number;
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

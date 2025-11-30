@@ -49,4 +49,62 @@ export class SupabaseService {
       return null;
     }
   }
+
+  /**
+   * Upload an image to Supabase Storage
+   * @param bucket - The storage bucket name
+   * @param path - The file path in the bucket
+   * @param file - The file buffer to upload
+   * @param contentType - The content type of the file
+   * @returns The public URL of the uploaded file
+   */
+  async uploadImage(
+    bucket: string,
+    path: string,
+    file: Buffer,
+    contentType: string,
+  ): Promise<string> {
+    const { data, error } = await this.supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        contentType,
+        upsert: true,
+      });
+
+    if (error) {
+      throw new Error(`Failed to upload image: ${error.message}`);
+    }
+
+    const {
+      data: { publicUrl },
+    } = this.supabase.storage.from(bucket).getPublicUrl(data.path);
+
+    return publicUrl;
+  }
+
+  /**
+   * Delete an image from Supabase Storage
+   * @param bucket - The storage bucket name
+   * @param path - The file path in the bucket
+   */
+  async deleteImage(bucket: string, path: string): Promise<void> {
+    const { error } = await this.supabase.storage.from(bucket).remove([path]);
+
+    if (error) {
+      throw new Error(`Failed to delete image: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get public URL for a file in Supabase Storage
+   * @param bucket - The storage bucket name
+   * @param path - The file path in the bucket
+   * @returns The public URL
+   */
+  getPublicUrl(bucket: string, path: string): string {
+    const {
+      data: { publicUrl },
+    } = this.supabase.storage.from(bucket).getPublicUrl(path);
+    return publicUrl;
+  }
 }

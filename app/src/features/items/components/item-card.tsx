@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Image } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Ionicons } from '@expo/vector-icons';
 import { Item } from '../types';
@@ -12,6 +12,8 @@ interface ItemCardProps {
   onDelete?: (item: Item) => void;
   onIncreaseQuantity?: (item: Item) => void;
   onDecreaseQuantity?: (item: Item) => void;
+  onImagePlaceholderPress?: (item: Item) => void;
+  onImagePress?: (item: Item) => void;
   canCheck: boolean;
   canEdit: boolean;
   isUpdatingQuantity?: boolean;
@@ -24,11 +26,14 @@ export function ItemCard({
   onDelete,
   onIncreaseQuantity,
   onDecreaseQuantity,
+  onImagePlaceholderPress,
+  onImagePress,
   canCheck,
   canEdit,
   isUpdatingQuantity = false,
 }: ItemCardProps) {
   const swipeableRef = useRef<Swipeable>(null);
+  const [imageError, setImageError] = useState(false);
 
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
@@ -77,6 +82,30 @@ export function ItemCard({
       overshootRight={false}
     >
       <View style={styles.container}>
+        {/* Image Thumbnail or Placeholder */}
+        {item.imageUrl && !imageError ? (
+          <TouchableOpacity
+            style={styles.imageThumbnailContainer}
+            onPress={() => onImagePress?.(item)}
+            activeOpacity={0.7}
+          >
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.imageThumbnail}
+              onError={() => setImageError(true)}
+            />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.imagePlaceholder}
+            onPress={() => canEdit && onImagePlaceholderPress?.(item)}
+            disabled={!canEdit || !onImagePlaceholderPress}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="image-outline" size={20} color="#ccc" />
+          </TouchableOpacity>
+        )}
+
         {/* Checkbox */}
         <TouchableOpacity
           style={styles.checkboxContainer}
@@ -85,7 +114,7 @@ export function ItemCard({
         >
           <Ionicons
             name={item.checked ? 'checkbox' : 'square-outline'}
-            size={28}
+            size={26}
             color={item.checked ? MAIN_COLOR : '#ccc'}
           />
         </TouchableOpacity>
@@ -101,9 +130,20 @@ export function ItemCard({
           {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
         </View>
 
-        {/* Right side - Quantity controls */}
+        {/* Right side - Quantity controls (vertical) */}
         {canEdit && onIncreaseQuantity && onDecreaseQuantity && (
           <View style={styles.quantityControls}>
+            <TouchableOpacity
+              style={[styles.quantityButton, styles.quantityButtonIncrease]}
+              onPress={() => onIncreaseQuantity(item)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={18} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.quantityDisplay}>
+              <Text style={styles.quantityText}>{item.quantity}</Text>
+              {item.unit && <Text style={styles.unitText}>{item.unit}</Text>}
+            </View>
             <TouchableOpacity
               style={[
                 styles.quantityButton,
@@ -115,18 +155,7 @@ export function ItemCard({
               disabled={item.quantity <= 1}
               activeOpacity={0.7}
             >
-              <Ionicons name="remove" size={20} color={item.quantity <= 1 ? '#ccc' : MAIN_COLOR} />
-            </TouchableOpacity>
-            <View style={styles.quantityDisplay}>
-              <Text style={styles.quantityText}>{item.quantity}</Text>
-              {item.unit && <Text style={styles.unitText}>{item.unit}</Text>}
-            </View>
-            <TouchableOpacity
-              style={[styles.quantityButton, styles.quantityButtonIncrease]}
-              onPress={() => onIncreaseQuantity(item)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="add" size={20} color="#fff" />
+              <Ionicons name="remove" size={18} color={item.quantity <= 1 ? '#ccc' : MAIN_COLOR} />
             </TouchableOpacity>
           </View>
         )}
@@ -139,8 +168,9 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
@@ -149,16 +179,40 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  quantityControls: {
-    flexDirection: 'row',
+  imageThumbnailContainer: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 10,
+  },
+  imageThumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePlaceholder: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 12,
-    gap: 8,
+    marginRight: 10,
+  },
+  quantityControls: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+    gap: 4,
   },
   quantityButton: {
     width: 32,
-    height: 32,
-    borderRadius: 8,
+    height: 28,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -180,30 +234,34 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   quantityDisplay: {
-    minWidth: 40,
+    minWidth: 32,
+    paddingVertical: 4,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   quantityText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: MAIN_COLOR,
+    lineHeight: 18,
   },
   unitText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#666',
-    marginTop: 2,
+    marginTop: 1,
   },
   checkboxContainer: {
-    marginRight: 12,
+    marginRight: 10,
   },
   itemContent: {
     flex: 1,
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 4,
+    marginBottom: 2,
+    lineHeight: 20,
   },
   itemTitleChecked: {
     textDecorationLine: 'line-through',
@@ -223,10 +281,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   itemNotes: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#666',
-    marginTop: 6,
+    marginTop: 4,
     fontStyle: 'italic',
+    lineHeight: 16,
   },
   swipeActions: {
     flexDirection: 'row',

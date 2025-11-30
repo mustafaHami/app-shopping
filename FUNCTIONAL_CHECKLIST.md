@@ -118,3 +118,45 @@ On the main lists screen, the user should see both:
 
 - [x] Set **default quantity to 1** when the user does not explicitly choose a quantity // 2025-11-29: CreateItemForm has default '1' value
 - [x] Option: create a **default list** (e.g. "My shopping list") automatically for new users // 2025-11-30: auto-creates "My Shopping List" on signup - Reduces steps before adding the first item
+
+# Functional checklist — ShoppingList (Phase 5)
+
+## Item Image Attachments
+
+### Image Picker & Camera
+
+- [x] Allow user to select an image from the device gallery when adding/editing an item // 2025-11-30: implemented ImagePickerModal with expo-image-picker
+- [x] Allow user to capture an image using the device camera when adding/editing an item // 2025-11-30: implemented camera launch in ImagePickerModal
+- [x] Present a clear choice between gallery and camera when the user wants to attach an image // 2025-11-30: modal with two clear options (Camera/Gallery)
+
+### Item Detail View ("More" / Edit Form)
+
+- [x] Add an "Attach Image" button or section in the item edit form // 2025-11-30: implemented image section at top of EditItemForm
+- [x] If an image is already attached: // 2025-11-30: full image management implemented
+  - [x] Display the image in the edit form (preview) // 2025-11-30: full width image preview with rounded corners
+  - [x] Provide a "Replace Image" action (opens gallery/camera picker) // 2025-11-30: replace button with swap icon
+  - [x] Provide a "Remove Image" action (clears the image from the item) // 2025-11-30: remove button with trash icon and confirmation
+- [x] If no image is attached: // 2025-11-30: implemented placeholder UI
+  - [x] Show a placeholder or empty state // 2025-11-30: dashed border placeholder with image icon
+  - [x] Provide an "Add Image" action (opens gallery/camera picker) // 2025-11-30: tappable placeholder opens ImagePickerModal
+
+### Items List View
+
+- [x] Display a small **thumbnail** on the left side of each item card when an image is attached // 2025-11-30: 48x48 rounded thumbnail in ItemCard
+- [x] Display a small **placeholder square** on the left side when no image is attached // 2025-11-30: 48x48 dashed placeholder square
+- [x] Make the placeholder tappable to quickly open the image picker (gallery/camera choice) // 2025-11-30: placeholder opens ImagePickerModal for quick image attach
+- [x] Ensure the thumbnail/placeholder doesn't interfere with existing layout (checkbox, title, quantity controls) // 2025-11-30: properly positioned before checkbox with correct spacing
+
+### Backend & Storage
+
+- [x] Store the image URL or file path in the database (Item model) // 2025-11-30: added imageUrl field to Item model via Prisma migration
+- [x] Handle image upload to a storage service (e.g., Supabase Storage, AWS S3, Cloudinary) // 2025-11-30: implemented Supabase Storage integration with uploadImage/deleteImage methods
+- [x] Return the image URL in the API responses for items (GET /items, GET /items/:id) // 2025-11-30: imageUrl included in all item responses
+- [x] Allow image deletion from storage when the user removes or replaces an image // 2025-11-30: deleteImage endpoint and automatic cleanup on replace
+
+### Validation & UX
+
+- [x] Limit image file size (e.g., max 5MB or 10MB) to prevent performance issues // 2025-11-30: 10MB limit enforced in backend with BadRequestException
+- [x] Show a loading indicator while the image is being uploaded // 2025-11-30: loading state in submit button during upload
+- [x] Display an error message if the upload fails (network issue, file too large, etc.) // 2025-11-30: Alert.alert for upload errors with error messages
+- [x] Ensure images are optimized or compressed before upload (optional but recommended for performance) // 2025-11-30: expo-image-picker quality set to 0.8 and allowsEditing for cropping

@@ -10,7 +10,7 @@ import { SupabaseService } from '../auth/supabase.service';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { UpdateInvitationDto } from './dto/update-invitation.dto';
-import { InvitationStatus } from '../../generated/prisma';
+import { InvitationStatus } from '@prisma/client';
 
 @Injectable()
 export class MembersService {

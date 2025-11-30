@@ -1,11 +1,9 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model List {
@@ -15,18 +13,18 @@ model List {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   description String?
+  invitations Invitation[]
   items       Item[]
   members     ListMember[]
-  invitations Invitation[]
 }
 
 model ListMember {
   id        String   @id @default(uuid()) @db.Uuid
   listId    String   @db.Uuid
   userId    String   @db.Uuid
-  userEmail String?
   role      Role     @default(WRITER)
   addedAt   DateTime @default(now())
+  userEmail String?
   list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@unique([listId, userId])
@@ -37,11 +35,11 @@ model Invitation {
   listId       String           @db.Uuid
   inviterId    String           @db.Uuid
   inviteeId    String           @db.Uuid
-  inviteeEmail String
   role         Role             @default(READER)
   status       InvitationStatus @default(PENDING)
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  inviteeEmail String
   list         List             @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@unique([listId, inviteeId])
@@ -57,9 +55,9 @@ model Item {
   category  String?
   checked   Boolean  @default(false)
   position  Int?
-  imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  imageUrl  String?
   list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
 }
 

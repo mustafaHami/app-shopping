@@ -25,5 +25,5 @@
       "generated/prisma": ["./generated/prisma"]
     }
   },
-  "include": ["src/**/*", "generated/prisma/**/*"]
+  "include": ["src/**/*", "generated/prisma/**/*", "prisma.config.ts"]
 }

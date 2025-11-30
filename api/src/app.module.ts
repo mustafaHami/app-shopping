@@ -7,9 +7,21 @@ import { ItemsModule } from './items/items.module';
 import { CategoriesModule } from './categories/categories.module';
 import { AuthModule } from './auth/auth.module';
 import { MembersModule } from './members/members.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [PrismaModule, AuthModule, ListsModule, ItemsModule, CategoriesModule, MembersModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: process.env.NODE_ENV === 'production' ? '.env.prod' : '.env',
+    }),
+    PrismaModule,
+    AuthModule,
+    ListsModule,
+    ItemsModule,
+    CategoriesModule,
+    MembersModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

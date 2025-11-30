@@ -36,10 +36,7 @@ export interface ApiClientOptions {
 /**
  * API client with automatic authentication
  */
-export async function apiClient<T>(
-  endpoint: string,
-  options: ApiClientOptions = {},
-): Promise<T> {
+export async function apiClient<T>(endpoint: string, options: ApiClientOptions = {}): Promise<T> {
   const { method = 'GET', body, requireAuth = true } = options;
 
   const headers = requireAuth ? await getAuthHeaders() : { 'Content-Type': 'application/json' };
@@ -77,4 +74,3 @@ export async function apiClient<T>(
 
   return response.json();
 }
-

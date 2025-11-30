@@ -196,4 +196,18 @@ export class ItemsService {
 
     return updatedItem;
   }
+
+  async updateQuantity(id: string, userId: string, quantity: number) {
+    const item = await this.findOne(id, userId);
+
+    // Check write permission for quantity changes
+    await this.checkWritePermission(item.listId, userId);
+
+    const updatedItem = await this.prisma.item.update({
+      where: { id },
+      data: { quantity },
+    });
+
+    return updatedItem;
+  }
 }

@@ -31,6 +31,13 @@ export const itemsApi = {
     });
   },
 
+  async updateQuantity(id: string, quantity: number): Promise<Item> {
+    return apiClient<Item>(`/items/${id}/quantity`, {
+      method: 'PATCH',
+      body: { quantity },
+    });
+  },
+
   async delete(id: string): Promise<void> {
     return apiClient<void>(`/items/${id}`, {
       method: 'DELETE',

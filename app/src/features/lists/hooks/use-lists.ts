@@ -34,8 +34,7 @@ export function useUpdateList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateListSchema }) =>
-      listsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateListSchema }) => listsApi.update(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY, variables.id] });
       queryClient.invalidateQueries({ queryKey: [LISTS_QUERY_KEY] });

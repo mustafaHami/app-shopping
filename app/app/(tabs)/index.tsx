@@ -9,10 +9,12 @@ import {
   Alert,
   TextInput,
   Animated,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useLists, useDeleteList } from '@/src/features/lists/hooks/use-lists';
 import { ListCard } from '@/src/features/lists/components/list-card';
 import { CreateListForm } from '@/src/features/lists/components/create-list-form';
@@ -33,7 +35,7 @@ export default function HomeScreen() {
   const [listFilter, setListFilter] = useState<ListFilter>('all');
 
   const { data: currentUser } = useCurrentUser();
-  const { data: lists, isLoading, error, refetch } = useLists();
+  const { data: lists, isLoading, error, refetch, isRefetching } = useLists();
   const deleteList = useDeleteList();
   const { mutate: signOut, isPending: isSigningOut } = useSignOut();
 
@@ -47,6 +49,11 @@ export default function HomeScreen() {
       refetch();
     }, [refetch]),
   );
+
+  // Handle pull-to-refresh
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   // Filter lists by search query and filter type
   const filteredLists = useMemo(() => {
@@ -141,134 +148,153 @@ export default function HomeScreen() {
   });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>ShoppL</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.searchButton} onPress={toggleSearch} activeOpacity={0.7}>
-            <Ionicons name={searchVisible ? 'close' : 'search'} size={24} color={MAIN_COLOR} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.createButton} onPress={() => setCreateModalVisible(true)}>
-            <Ionicons name="add" size={28} color="#fff" />
-          </TouchableOpacity>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>ShoppL</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={toggleSearch}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={searchVisible ? 'close' : 'search'} size={24} color={MAIN_COLOR} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => setCreateModalVisible(true)}
+            >
+              <Ionicons name="add" size={28} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.createButton, { backgroundColor: '#eee', marginLeft: 8 }]}
+              onPress={() => {
+                signOut(undefined, {
+                  onSuccess: () => {
+                    router.replace('/sign-in');
+                  },
+                  onError: () => {
+                    Alert.alert('Error', 'Sign out failed');
+                  },
+                });
+              }}
+              disabled={isSigningOut}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="log-out-outline" size={20} color="#444" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Filter Tabs */}
+        <View style={styles.filterTabsContainer}>
           <TouchableOpacity
-            style={[styles.createButton, { backgroundColor: '#eee', marginLeft: 8 }]}
-            onPress={() => {
-              signOut(undefined, {
-                onSuccess: () => {
-                  router.replace('/sign-in');
-                },
-                onError: () => {
-                  Alert.alert('Error', 'Sign out failed');
-                },
-              });
-            }}
-            disabled={isSigningOut}
+            style={[styles.filterTab, listFilter === 'all' && styles.filterTabActive]}
+            onPress={() => setListFilter('all')}
             activeOpacity={0.7}
           >
-            <Ionicons name="log-out-outline" size={20} color="#444" />
+            <Text
+              style={[styles.filterTabText, listFilter === 'all' && styles.filterTabTextActive]}
+            >
+              All
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, listFilter === 'my' && styles.filterTabActive]}
+            onPress={() => setListFilter('my')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterTabText, listFilter === 'my' && styles.filterTabTextActive]}>
+              My Lists
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, listFilter === 'shared' && styles.filterTabActive]}
+            onPress={() => setListFilter('shared')}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[styles.filterTabText, listFilter === 'shared' && styles.filterTabTextActive]}
+            >
+              Shared
+            </Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Filter Tabs */}
-      <View style={styles.filterTabsContainer}>
-        <TouchableOpacity
-          style={[styles.filterTab, listFilter === 'all' && styles.filterTabActive]}
-          onPress={() => setListFilter('all')}
-          activeOpacity={0.7}
+        <Animated.View
+          style={[
+            styles.searchContainer,
+            {
+              height: searchBarHeightValue,
+              opacity: searchBarOpacity,
+            },
+          ]}
         >
-          <Text style={[styles.filterTabText, listFilter === 'all' && styles.filterTabTextActive]}>
-            All
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, listFilter === 'my' && styles.filterTabActive]}
-          onPress={() => setListFilter('my')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.filterTabText, listFilter === 'my' && styles.filterTabTextActive]}>
-            My Lists
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, listFilter === 'shared' && styles.filterTabActive]}
-          onPress={() => setListFilter('shared')}
-          activeOpacity={0.7}
-        >
-          <Text
-            style={[styles.filterTabText, listFilter === 'shared' && styles.filterTabTextActive]}
-          >
-            Shared with me
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <Animated.View
-        style={[
-          styles.searchContainer,
-          {
-            height: searchBarHeightValue,
-            opacity: searchBarOpacity,
-          },
-        ]}
-      >
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search lists by title..."
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoFocus={searchVisible}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-              <Ionicons name="close-circle" size={20} color="#999" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </Animated.View>
-
-      {lists && lists.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No lists yet</Text>
-          <Text style={styles.emptySubtext}>Create your first shopping list to get started</Text>
-        </View>
-      ) : filteredLists.length === 0 && searchQuery.trim() ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="search-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>No lists found</Text>
-          <Text style={styles.emptySubtext}>Try a different search term</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredLists}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <ListCard
-              list={item}
-              onPress={handleListPress}
-              onEdit={item.ownerId === currentUser?.id ? handleEditList : undefined}
-              onDelete={item.ownerId === currentUser?.id ? handleDeleteList : undefined}
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search lists by title..."
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus={searchVisible}
             />
-          )}
-          contentContainerStyle={styles.listContent}
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color="#999" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </Animated.View>
+
+        {lists && lists.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No lists yet</Text>
+            <Text style={styles.emptySubtext}>Create your first shopping list to get started</Text>
+          </View>
+        ) : filteredLists.length === 0 && searchQuery.trim() ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="search-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>No lists found</Text>
+            <Text style={styles.emptySubtext}>Try a different search term</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredLists}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => (
+              <ListCard
+                list={item}
+                onPress={handleListPress}
+                onEdit={item.ownerId === currentUser?.id ? handleEditList : undefined}
+                onDelete={item.ownerId === currentUser?.id ? handleDeleteList : undefined}
+              />
+            )}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={handleRefresh}
+                tintColor={MAIN_COLOR}
+                colors={[MAIN_COLOR]}
+              />
+            }
+          />
+        )}
+
+        <CreateListForm visible={createModalVisible} onClose={() => setCreateModalVisible(false)} />
+
+        <EditListForm
+          visible={editModalVisible}
+          onClose={() => {
+            setEditModalVisible(false);
+            setSelectedList(null);
+          }}
+          list={selectedList}
         />
-      )}
-
-      <CreateListForm visible={createModalVisible} onClose={() => setCreateModalVisible(false)} />
-
-      <EditListForm
-        visible={editModalVisible}
-        onClose={() => {
-          setEditModalVisible(false);
-          setSelectedList(null);
-        }}
-        list={selectedList}
-      />
-    </View>
+      </View>
+    </GestureHandlerRootView>
   );
 }
 

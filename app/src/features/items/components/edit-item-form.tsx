@@ -10,7 +10,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { useUpdateItem } from '../hooks/use-items';
+import { useUpdateItem, useCreateItem } from '../hooks/use-items';
 import { Item } from '../types';
 import { Button } from '@/src/components/ui/button';
 import { MAIN_COLOR } from '@/src/constants/theme';
@@ -30,6 +30,9 @@ export function EditItemForm({ visible, onClose, item, allCategories }: EditItem
   const [notes, setNotes] = useState('');
   const [category, setCategory] = useState('');
   const updateItem = useUpdateItem();
+  const createItem = useCreateItem();
+
+  const isNewItem = !item?.id;
 
   useEffect(() => {
     if (item) {
@@ -64,11 +67,20 @@ export function EditItemForm({ visible, onClose, item, allCategories }: EditItem
       if (notes.trim()) data.notes = notes.trim();
       if (category.trim()) data.category = category.trim();
 
-      await updateItem.mutateAsync({
-        id: item.id,
-        data,
-        listId: item.listId,
-      });
+      if (isNewItem) {
+        // Create new item
+        await createItem.mutateAsync({
+          ...data,
+          listId: item.listId,
+        });
+      } else {
+        // Update existing item
+        await updateItem.mutateAsync({
+          id: item.id,
+          data,
+          listId: item.listId,
+        });
+      }
       onClose();
     } catch (error: any) {
       console.error(error);
@@ -79,7 +91,7 @@ export function EditItemForm({ visible, onClose, item, allCategories }: EditItem
           error.message || 'An item with this name already exists in the list',
         );
       } else {
-        Alert.alert('Error', error.message || 'Failed to update item');
+        Alert.alert('Error', error.message || `Failed to ${isNewItem ? 'create' : 'update'} item`);
       }
     }
   };
@@ -92,7 +104,7 @@ export function EditItemForm({ visible, onClose, item, allCategories }: EditItem
       >
         <View style={styles.modalContent}>
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={styles.modalTitle}>Edit Item</Text>
+            <Text style={styles.modalTitle}>{isNewItem ? 'Add Item Details' : 'Edit Item'}</Text>
 
             <Text style={styles.label}>
               Item Name <Text style={styles.required}>*</Text>
@@ -144,10 +156,10 @@ export function EditItemForm({ visible, onClose, item, allCategories }: EditItem
               <Button variant="secondary" title="Cancel" onPress={onClose} />
               <Button
                 variant="primary"
-                title="Update"
+                title={isNewItem ? 'Add Item' : 'Update'}
                 onPress={handleSubmit}
                 disabled={!title.trim() || !quantity.trim()}
-                loading={updateItem.isPending}
+                loading={isNewItem ? createItem.isPending : updateItem.isPending}
               />
             </View>
           </ScrollView>

@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Ionicons } from '@expo/vector-icons';
 import { List } from '../types';
 import { ERROR_COLOR, MAIN_COLOR } from '@/src/constants/theme';
@@ -12,6 +13,7 @@ interface ListCardProps {
 }
 
 export function ListCard({ list, onPress, onEdit, onDelete }: ListCardProps) {
+  const swipeableRef = useRef<Swipeable>(null);
   const itemCount = list.items?.length ?? 0;
   const createdDate = new Date(list.createdAt).toLocaleDateString('en-US', {
     month: 'short',
@@ -28,50 +30,68 @@ export function ListCard({ list, onPress, onEdit, onDelete }: ListCardProps) {
 
   const badgeLabel = getBadgeLabel();
 
-  return (
-    <TouchableOpacity style={styles.container} onPress={() => onPress(list)} activeOpacity={0.7}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>{list.title}</Text>
-            {badgeLabel && (
-              <View style={styles.badgeContainer}>
-                <Text style={styles.badgeText}>{badgeLabel}</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.buttonContainer}>
-            {onEdit && (
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={e => {
-                  e.stopPropagation();
-                  onEdit(list);
-                }}
-              >
-                <Ionicons name="pencil" size={16} color="#fff" />
-              </TouchableOpacity>
-            )}
-            {onDelete && (
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={e => {
-                  e.stopPropagation();
-                  onDelete(list);
-                }}
-              >
-                <Ionicons name="trash" size={16} color="#fff" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-        {list.description && <Text style={styles.description}>{list.description}</Text>}
-        <View style={styles.footer}>
-          <Text style={styles.itemCount}>{itemCount} items</Text>
-          <Text style={styles.date}>{createdDate}</Text>
-        </View>
+  const renderRightActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+    dragX: Animated.AnimatedInterpolation<number>,
+  ) => {
+    if (!onEdit && !onDelete) return null;
+
+    return (
+      <View style={styles.swipeActions}>
+        {onEdit && (
+          <Animated.View style={styles.swipeActionWrapper}>
+            <TouchableOpacity
+              style={[styles.swipeAction]}
+              onPress={() => {
+                swipeableRef.current?.close();
+                onEdit(list);
+              }}
+            >
+              <Ionicons name="pencil" size={20} color={MAIN_COLOR} />
+              <Text style={[styles.swipeActionText, styles.swipeActionEditText]}>Edit</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+        {onDelete && (
+          <Animated.View style={styles.swipeActionWrapper}>
+            <TouchableOpacity
+              style={[styles.swipeAction]}
+              onPress={() => {
+                swipeableRef.current?.close();
+                onDelete(list);
+              }}
+            >
+              <Ionicons name="trash" size={20} color={ERROR_COLOR} />
+              <Text style={[styles.swipeActionText, styles.swipeActionDeleteText]}>Delete</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </View>
-    </TouchableOpacity>
+    );
+  };
+
+  return (
+    <Swipeable ref={swipeableRef} renderRightActions={renderRightActions} overshootRight={false}>
+      <TouchableOpacity style={styles.container} onPress={() => onPress(list)} activeOpacity={0.7}>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>{list.title}</Text>
+              {badgeLabel && (
+                <View style={styles.badgeContainer}>
+                  <Text style={styles.badgeText}>{badgeLabel}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          {list.description && <Text style={styles.description}>{list.description}</Text>}
+          <View style={styles.footer}>
+            <Text style={styles.itemCount}>{itemCount} items</Text>
+            <Text style={styles.date}>{createdDate}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Swipeable>
   );
 }
 
@@ -140,24 +160,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
   },
-  buttonContainer: {
+  swipeActions: {
     flexDirection: 'row',
-    gap: 8,
+    height: '100%',
   },
-  editButton: {
-    backgroundColor: MAIN_COLOR,
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
+  swipeActionWrapper: {
     justifyContent: 'center',
   },
-  deleteButton: {
-    backgroundColor: ERROR_COLOR,
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
+  swipeAction: {
     justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+    paddingHorizontal: 12,
+  },
+  swipeActionText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  swipeActionEditText: {
+    color: MAIN_COLOR,
+  },
+  swipeActionDeleteText: {
+    color: ERROR_COLOR,
   },
 });

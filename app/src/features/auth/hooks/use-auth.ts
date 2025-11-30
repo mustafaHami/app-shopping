@@ -3,6 +3,7 @@ import { authApi } from '../services/auth-api';
 import { SignUpData, SignInData, AuthSession, AuthUser } from '../types';
 import { supabase } from '@/src/lib/supabase';
 import { useEffect, useState } from 'react';
+import { listsApi } from '@/src/features/lists/services/lists-api';
 
 /**
  * Hook to get the current session
@@ -36,9 +37,22 @@ export const useSignUp = () => {
 
   return useMutation<AuthSession, Error, SignUpData>({
     mutationFn: authApi.signUp,
-    onSuccess: (session) => {
+    onSuccess: async session => {
       queryClient.setQueryData(['auth', 'session'], session);
       queryClient.setQueryData(['auth', 'user'], session.user);
+
+      // Create default list for new user
+      try {
+        await listsApi.create({
+          title: 'My Shopping List',
+          description: 'Your first shopping list',
+        });
+        // Invalidate lists query to show the new default list
+        queryClient.invalidateQueries({ queryKey: ['lists'] });
+      } catch (error) {
+        console.error('Failed to create default list:', error);
+        // Don't throw error, just log it - signup is still successful
+      }
     },
   });
 };
@@ -51,7 +65,7 @@ export const useSignIn = () => {
 
   return useMutation<AuthSession, Error, SignInData>({
     mutationFn: authApi.signIn,
-    onSuccess: (session) => {
+    onSuccess: session => {
       queryClient.setQueryData(['auth', 'session'], session);
       queryClient.setQueryData(['auth', 'user'], session.user);
     },
@@ -140,4 +154,3 @@ export const useAuthStateChange = () => {
 
   return { isInitialized };
 };
-

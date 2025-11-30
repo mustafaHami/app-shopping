@@ -6,7 +6,7 @@
 import { Platform } from 'react-native';
 
 // Modern, light/friendly colors
-export const MAIN_COLOR = '#479ad1'; // Soft/light blue (for validate/action)
+export const MAIN_COLOR = '#4CAF50'; // Fresh green - evokes groceries, vegetables, freshness
 export const ERROR_COLOR = '#FF626F'; // Soft/light red (for errors, delete, etc)
 
 const tintColorLight = MAIN_COLOR;

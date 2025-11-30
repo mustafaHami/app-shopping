@@ -1,10 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe, BadRequestException } from '@nestjs/common';
+import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger();
+
+  // Enable global logging interceptor
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -29,6 +33,6 @@ async function bootstrap() {
   });
 
   logger.log('Started on port:', process.env.PORT ?? 3000);
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0'); // Listen on all network interfaces
 }
 bootstrap();

@@ -95,3 +95,26 @@ On the main lists screen, the user should see both:
 - [x] Lists they created (owner) and Lists shared with them (where they are reader or writer) // 2025-11-23: backend returns all accessible lists with userRole
 - [x] Badges on each list (e.g. "Owner", "Shared • Reader", "Shared • Writer"), and showing the owner for shared lists. // 2025-11-23: badges added to list cards
 - [x] Add three sections ("All","My lists" and "Shared with me"), // 2025-11-23: added filter tabs to quickly switch between all/my/shared lists
+
+## Phase 4 – UX & Speed Optimizations
+
+### Lists Screen
+
+- [x] Replace visible edit/delete buttons with **swipe-left actions** on each list card // 2025-11-29: implemented swipe actions with Swipeable - Primary actions when swiping: **Edit**, **Delete**
+- [x] Ensure the **entire list card is tappable** and opens the list items // 2025-11-29: TouchableOpacity wraps entire card
+- [x] Keep the UI visually clean by hiding destructive actions (Delete) behind swipe // 2025-11-29: actions hidden until swipe
+
+### Items Screen (Inside a List)
+
+- [x] Add a **Quick Add** row at the top of the items list // 2025-11-29: quick add input field with add button - Single text field: user types the item name and confirms
+- [x] When using Quick Add, create the item with: // 2025-11-29: implemented in handleQuickAdd - [x] **Default quantity = 1** // 2025-11-29: hardcoded quantity: 1 - [x] Empty category / notes by default // 2025-11-29: only title and quantity sent
+- [x] Add a **"More" / "Details"** action for each item // 2025-11-30: details button (ellipsis icon) next to quick add button - Opens the existing **full item form** // 2025-11-30: EditItemForm now handles both create and edit modes - The **item name is pre-filled** from the quick add // 2025-11-30: item title pre-filled when details button clicked
+- [x] Replace current visible edit/delete icon buttons with **swipe-left actions** on each item // 2025-11-29: ItemCard component with Swipeable - Primary actions when swiping: **Edit**, **Delete**
+- [x] Keep the existing behavior: checked items move to the bottom section // 2025-11-29: uncheckedItems and checkedItems separated - [x] Option to **collapse / expand purchased items** to reduce scrolling // 2025-11-29: purchasedExpanded state with collapsible section
+- [x] On opening a list, **auto-focus the Quick Add field** so the keyboard is ready to type // 2025-11-29: useFocusEffect with timeout + ref.focus()
+- [x] Add a small **+ / - quantity control** directly on each item (left side) to quickly increase or decrease quantity without opening the details view // 2025-11-29: ItemCard with quantity controls, updateQuantity hook and API endpoint
+
+### Onboarding & Defaults
+
+- [x] Set **default quantity to 1** when the user does not explicitly choose a quantity // 2025-11-29: CreateItemForm has default '1' value
+- [x] Option: create a **default list** (e.g. "My shopping list") automatically for new users // 2025-11-30: auto-creates "My Shopping List" on signup - Reduces steps before adding the first item

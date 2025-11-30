@@ -10,6 +10,8 @@ import {
   Modal,
   ScrollView,
   RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -245,7 +247,15 @@ export default function MembersScreen() {
         animationType="slide"
         onRequestClose={() => setInviteModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setInviteModalVisible(false)}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Invite Member</Text>
@@ -262,6 +272,7 @@ export default function MembersScreen() {
               placeholder="user@example.com"
               keyboardType="email-address"
               autoCapitalize="none"
+              autoFocus
             />
 
             <Text style={styles.label}>Role</Text>
@@ -306,7 +317,7 @@ export default function MembersScreen() {
               )}
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

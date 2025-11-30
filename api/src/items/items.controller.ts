@@ -1,7 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Logger,
+} from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { UpdateItemQuantityDto } from './dto/update-item-quantity.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { CurrentUserData } from '../auth/decorators/current-user.decorator';
@@ -37,7 +48,17 @@ export class ItemsController {
 
   @Patch(':id/toggle')
   toggleChecked(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
+    console.log(`Toggling item ${id} for user ${user.id}`);
     return this.itemsService.toggleChecked(id, user.id);
+  }
+
+  @Patch(':id/quantity')
+  updateQuantity(
+    @Param('id') id: string,
+    @CurrentUser() user: CurrentUserData,
+    @Body() updateItemQuantityDto: UpdateItemQuantityDto,
+  ) {
+    return this.itemsService.updateQuantity(id, user.id, updateItemQuantityDto.quantity);
   }
 
   @Delete(':id')

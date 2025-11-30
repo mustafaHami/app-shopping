@@ -1,21 +1,30 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
   ScrollView,
   RefreshControl,
+  TextInput,
+  Keyboard,
 } from 'react-native';
-import { useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, Stack, useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useItems, useDeleteItem, useToggleItem } from '@/src/features/items/hooks/use-items';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  useItems,
+  useDeleteItem,
+  useToggleItem,
+  useCreateItem,
+  useUpdateQuantity,
+} from '@/src/features/items/hooks/use-items';
 import { useList } from '@/src/features/lists/hooks/use-lists';
 import { useCategories } from '@/src/features/categories/hooks/use-categories';
 import { Item } from '@/src/features/items/types';
+import { ItemCard } from '@/src/features/items/components/item-card';
 import { CreateItemForm } from '@/src/features/items/components/create-item-form';
 import { EditItemForm } from '@/src/features/items/components/edit-item-form';
 import { MAIN_COLOR, ERROR_COLOR } from '@/src/constants/theme';
@@ -27,6 +36,10 @@ export default function ListDetailsScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [quickAddText, setQuickAddText] = useState('');
+  const [purchasedExpanded, setPurchasedExpanded] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  const quickAddInputRef = useRef<TextInput>(null);
 
   const {
     data: list,
@@ -44,12 +57,18 @@ export default function ListDetailsScreen() {
   const { data: categories } = useCategories();
   const deleteItem = useDeleteItem();
   const toggleItem = useToggleItem();
+  const createItem = useCreateItem();
+  const updateQuantity = useUpdateQuantity();
 
+  // Auto-focus quick add field when screen loads (only once on mount)
   useFocusEffect(
     useCallback(() => {
-      refetchList();
-      refetchItems();
-    }, [refetchList, refetchItems]),
+      if (canAddEditDeleteItems(list)) {
+        setTimeout(() => quickAddInputRef.current?.focus(), 300);
+      }
+      // Don't refetch - let React Query's staleTime handle when to fetch
+      // Users can pull-to-refresh manually if they want fresh data
+    }, [list]),
   );
 
   const handleRefresh = useCallback(() => {
@@ -78,6 +97,15 @@ export default function ListDetailsScreen() {
     return items.filter(item => item.category === categoryFilter);
   }, [items, categoryFilter]);
 
+  // Separate unchecked and checked items
+  const uncheckedItems = useMemo(() => {
+    return filteredItems.filter(item => !item.checked);
+  }, [filteredItems]);
+
+  const checkedItems = useMemo(() => {
+    return filteredItems.filter(item => item.checked);
+  }, [filteredItems]);
+
   const handleToggleCheck = async (item: Item) => {
     if (!canCheckItems(list)) {
       Alert.alert('Permission Denied', 'You do not have permission to check/uncheck items');
@@ -85,7 +113,7 @@ export default function ListDetailsScreen() {
     }
     try {
       await toggleItem.mutateAsync({ id: item.id, listId: id! });
-    } catch (_error) {
+    } catch {
       Alert.alert('Error', 'Failed to update item');
     }
   };
@@ -103,12 +131,81 @@ export default function ListDetailsScreen() {
         onPress: async () => {
           try {
             await deleteItem.mutateAsync({ id: item.id, listId: id! });
-          } catch (_error) {
+          } catch {
             Alert.alert('Error', 'Failed to delete item');
           }
         },
       },
     ]);
+  };
+
+  const handleQuickAdd = async () => {
+    if (!quickAddText.trim()) return;
+
+    try {
+      await createItem.mutateAsync({
+        listId: id!,
+        title: quickAddText.trim(),
+        quantity: 1,
+      });
+      setQuickAddText('');
+      Keyboard.dismiss();
+      quickAddInputRef.current?.focus();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to add item');
+    }
+  };
+
+  const handleQuickAddDetails = () => {
+    if (!quickAddText.trim()) {
+      Alert.alert('Enter Item Name', 'Please enter an item name first');
+      return;
+    }
+    // Set the quick add text as the selected item title for the modal
+    setSelectedItem({
+      id: '',
+      title: quickAddText.trim(),
+      quantity: 1,
+      listId: id!,
+      checked: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as any);
+    setEditModalVisible(true);
+    setQuickAddText('');
+  };
+
+  const handleIncreaseQuantity = (item: Item) => {
+    setUpdatingItemId(item.id);
+    updateQuantity.mutate(
+      {
+        id: item.id,
+        quantity: item.quantity + 1,
+        listId: id!,
+      },
+      {
+        onSettled: () => {
+          setUpdatingItemId(null);
+        },
+      },
+    );
+  };
+
+  const handleDecreaseQuantity = (item: Item) => {
+    if (item.quantity <= 1) return;
+    setUpdatingItemId(item.id);
+    updateQuantity.mutate(
+      {
+        id: item.id,
+        quantity: item.quantity - 1,
+        listId: id!,
+      },
+      {
+        onSettled: () => {
+          setUpdatingItemId(null);
+        },
+      },
+    );
   };
 
   if (listLoading || itemsLoading) {
@@ -131,153 +228,231 @@ export default function ListDetailsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: list?.title || 'List Details',
-          headerBackTitle: 'Lists',
-          headerRight: () =>
-            canManageMembers(list) ? (
-              <TouchableOpacity
-                onPress={() => {
-                  // Navigate to members screen
-                  const router = require('expo-router').router;
-                  router.push(`/list/${id}/members`);
-                }}
-                style={{ marginRight: 8 }}
-              >
-                <Ionicons name="people" size={24} color={MAIN_COLOR} />
-              </TouchableOpacity>
-            ) : null,
-        }}
-      />
-      {usedCategories.length > 0 && (
-        <View style={styles.filterBarWrapper}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.filterBar}
-            contentContainerStyle={styles.filterBarContent}
-          >
-            <TouchableOpacity
-              style={[styles.filterChip, !categoryFilter && styles.filterChipActive]}
-              onPress={() => setCategoryFilter('')}
-              activeOpacity={0.8}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <Stack.Screen
+          options={{
+            title: list?.title || 'List Details',
+            headerBackTitle: 'Lists',
+            headerRight: () =>
+              canManageMembers(list) ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    router.push(`/list/${id}/members`);
+                  }}
+                  style={{ marginRight: 8 }}
+                >
+                  <Ionicons name="people" size={24} color={MAIN_COLOR} />
+                </TouchableOpacity>
+              ) : null,
+          }}
+        />
+        {usedCategories.length > 0 && (
+          <View style={styles.filterBarWrapper}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filterBar}
+              contentContainerStyle={styles.filterBarContent}
             >
-              <Text style={[styles.filterChipText, !categoryFilter && styles.filterChipTextActive]}>
-                All
-              </Text>
-            </TouchableOpacity>
-            {usedCategories.map(cat => (
               <TouchableOpacity
-                key={cat}
-                style={[styles.filterChip, categoryFilter === cat && styles.filterChipActive]}
-                onPress={() => setCategoryFilter(cat || '')}
+                style={[styles.filterChip, !categoryFilter && styles.filterChipActive]}
+                onPress={() => setCategoryFilter('')}
                 activeOpacity={0.8}
               >
                 <Text
-                  style={[
-                    styles.filterChipText,
-                    categoryFilter === cat && styles.filterChipTextActive,
-                  ]}
+                  style={[styles.filterChipText, !categoryFilter && styles.filterChipTextActive]}
                 >
-                  {cat}
+                  All
                 </Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-      {!items || filteredItems.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="cart-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>
-            No items{categoryFilter ? ` in "${categoryFilter}"` : ''}
-          </Text>
-          <Text style={styles.emptySubtext}>Add your first item to get started</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredItems}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.itemCard}>
-              <TouchableOpacity
-                style={styles.checkboxContainer}
-                onPress={() => handleToggleCheck(item)}
-                disabled={!canCheckItems(list)}
-              >
-                <Ionicons
-                  name={item.checked ? 'checkbox' : 'square-outline'}
-                  size={28}
-                  color={item.checked ? MAIN_COLOR : '#ccc'}
-                />
-              </TouchableOpacity>
-              <View style={styles.itemContent}>
-                <Text style={[styles.itemTitle, item.checked && styles.itemTitleChecked]}>
-                  {item.title}
-                </Text>
-                <View style={styles.itemDetails}>
-                  <Text style={styles.itemQuantity}>
-                    {item.quantity} {item.unit || 'unit(s)'}
+              {usedCategories.map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.filterChip, categoryFilter === cat && styles.filterChipActive]}
+                  onPress={() => setCategoryFilter(cat || '')}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      categoryFilter === cat && styles.filterChipTextActive,
+                    ]}
+                  >
+                    {cat}
                   </Text>
-                  {item.category && <Text style={styles.itemCategory}>{item.category}</Text>}
-                </View>
-                {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
-              </View>
-              {canAddEditDeleteItems(list) && (
-                <View style={styles.itemActions}>
-                  <TouchableOpacity
-                    style={styles.editIconButton}
-                    onPress={() => {
-                      setSelectedItem(item);
-                      setEditModalVisible(true);
-                    }}
-                  >
-                    <Ionicons name="pencil" size={18} color={MAIN_COLOR} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.deleteIconButton}
-                    onPress={() => handleDeleteItem(item)}
-                  >
-                    <Ionicons name="trash" size={18} color={ERROR_COLOR} />
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          )}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetchingList || isRefetchingItems}
-              onRefresh={handleRefresh}
-              tintColor={MAIN_COLOR}
-              colors={[MAIN_COLOR]}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Quick Add - Always visible when user can edit */}
+        {canAddEditDeleteItems(list) && (
+          <View style={styles.quickAddContainer}>
+            <Ionicons name="cart-outline" size={20} color="#999" style={styles.quickAddIcon} />
+            <TextInput
+              ref={quickAddInputRef}
+              style={styles.quickAddInput}
+              placeholder="Add item..."
+              placeholderTextColor="#999"
+              value={quickAddText}
+              onChangeText={setQuickAddText}
+              onSubmitEditing={handleQuickAdd}
+              returnKeyType="done"
             />
-          }
+            <TouchableOpacity
+              style={[
+                styles.quickAddDetailsButton,
+                !quickAddText.trim() && styles.quickAddDetailsButtonDisabled,
+              ]}
+              onPress={handleQuickAddDetails}
+              disabled={!quickAddText.trim()}
+              activeOpacity={0.6}
+            >
+              <Ionicons
+                name="ellipsis-horizontal"
+                size={20}
+                color={!quickAddText.trim() ? '#ccc' : MAIN_COLOR}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.quickAddButton,
+                (!quickAddText.trim() || createItem.isPending) && styles.quickAddButtonDisabled,
+              ]}
+              onPress={handleQuickAdd}
+              disabled={!quickAddText.trim() || createItem.isPending}
+              activeOpacity={0.6}
+            >
+              {createItem.isPending ? (
+                <ActivityIndicator size="small" color={MAIN_COLOR} />
+              ) : (
+                <Ionicons name="add" size={22} color={MAIN_COLOR} />
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!items || filteredItems.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="cart-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>
+              No items{categoryFilter ? ` in "${categoryFilter}"` : ''}
+            </Text>
+            <Text style={styles.emptySubtext}>
+              {canAddEditDeleteItems(list)
+                ? 'Use the field above to add your first item'
+                : 'No items in this list yet'}
+            </Text>
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetchingList || isRefetchingItems}
+                onRefresh={handleRefresh}
+                tintColor={MAIN_COLOR}
+                colors={[MAIN_COLOR]}
+              />
+            }
+          >
+            {/* Unchecked items */}
+            {uncheckedItems.map(item => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onToggleCheck={handleToggleCheck}
+                onEdit={
+                  canAddEditDeleteItems(list)
+                    ? () => {
+                        setSelectedItem(item);
+                        setEditModalVisible(true);
+                      }
+                    : undefined
+                }
+                onDelete={canAddEditDeleteItems(list) ? handleDeleteItem : undefined}
+                onIncreaseQuantity={
+                  canAddEditDeleteItems(list) ? handleIncreaseQuantity : undefined
+                }
+                onDecreaseQuantity={
+                  canAddEditDeleteItems(list) ? handleDecreaseQuantity : undefined
+                }
+                canCheck={canCheckItems(list)}
+                canEdit={canAddEditDeleteItems(list)}
+                isUpdatingQuantity={updatingItemId === item.id}
+              />
+            ))}
+
+            {/* Purchased items section */}
+            {checkedItems.length > 0 && (
+              <View style={styles.purchasedSection}>
+                <TouchableOpacity
+                  style={styles.purchasedHeader}
+                  onPress={() => setPurchasedExpanded(!purchasedExpanded)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.purchasedHeaderText}>Purchased ({checkedItems.length})</Text>
+                  <Ionicons
+                    name={purchasedExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={24}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+                {purchasedExpanded &&
+                  checkedItems.map(item => (
+                    <ItemCard
+                      key={item.id}
+                      item={item}
+                      onToggleCheck={handleToggleCheck}
+                      onEdit={
+                        canAddEditDeleteItems(list)
+                          ? () => {
+                              setSelectedItem(item);
+                              setEditModalVisible(true);
+                            }
+                          : undefined
+                      }
+                      onDelete={canAddEditDeleteItems(list) ? handleDeleteItem : undefined}
+                      onIncreaseQuantity={
+                        canAddEditDeleteItems(list) ? handleIncreaseQuantity : undefined
+                      }
+                      onDecreaseQuantity={
+                        canAddEditDeleteItems(list) ? handleDecreaseQuantity : undefined
+                      }
+                      canCheck={canCheckItems(list)}
+                      canEdit={canAddEditDeleteItems(list)}
+                      isUpdatingQuantity={updatingItemId === item.id || isRefetchingItems}
+                    />
+                  ))}
+              </View>
+            )}
+          </ScrollView>
+        )}
+        {canAddEditDeleteItems(list) && (
+          <TouchableOpacity style={styles.fab} onPress={() => setCreateModalVisible(true)}>
+            <Ionicons name="add" size={32} color="#fff" />
+          </TouchableOpacity>
+        )}
+        <CreateItemForm
+          visible={createModalVisible}
+          onClose={() => setCreateModalVisible(false)}
+          listId={id!}
+          allCategories={allCategoryNames}
         />
-      )}
-      {canAddEditDeleteItems(list) && (
-        <TouchableOpacity style={styles.fab} onPress={() => setCreateModalVisible(true)}>
-          <Ionicons name="add" size={32} color="#fff" />
-        </TouchableOpacity>
-      )}
-      <CreateItemForm
-        visible={createModalVisible}
-        onClose={() => setCreateModalVisible(false)}
-        listId={id!}
-        allCategories={allCategoryNames}
-      />
-      <EditItemForm
-        visible={editModalVisible}
-        onClose={() => {
-          setEditModalVisible(false);
-          setSelectedItem(null);
-        }}
-        item={selectedItem}
-        allCategories={allCategoryNames}
-      />
-    </View>
+        <EditItemForm
+          visible={editModalVisible}
+          onClose={() => {
+            setEditModalVisible(false);
+            setSelectedItem(null);
+          }}
+          item={selectedItem}
+          allCategories={allCategoryNames}
+        />
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -292,8 +467,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
   },
+  scrollView: {
+    flex: 1,
+  },
   listContent: {
     padding: 16,
+    paddingBottom: 100,
   },
   emptyContainer: {
     flex: 1,
@@ -324,69 +503,6 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     paddingHorizontal: 32,
-  },
-  itemCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  checkboxContainer: {
-    marginRight: 12,
-  },
-  itemContent: {
-    flex: 1,
-  },
-  itemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-  itemTitleChecked: {
-    textDecorationLine: 'line-through',
-    color: '#999',
-  },
-  itemDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  itemQuantity: {
-    fontSize: 14,
-    color: MAIN_COLOR,
-    fontWeight: '500',
-  },
-  itemCategory: {
-    fontSize: 12,
-    color: '#666',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  itemNotes: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 6,
-    fontStyle: 'italic',
-  },
-  itemActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  editIconButton: {
-    padding: 8,
-  },
-  deleteIconButton: {
-    padding: 8,
   },
   fab: {
     position: 'absolute',
@@ -434,5 +550,78 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: '#fff',
     fontWeight: '700',
+  },
+  quickAddContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    shadowColor: MAIN_COLOR,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
+    borderWidth: 1.5,
+    borderColor: '#f0f0f0',
+  },
+  quickAddIcon: {
+    marginRight: 14,
+    opacity: 0.6,
+  },
+  quickAddInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1a1a1a',
+    paddingVertical: 8,
+    fontWeight: '500',
+  },
+  quickAddDetailsButton: {
+    backgroundColor: '#f5f5f5',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  quickAddDetailsButtonDisabled: {
+    backgroundColor: '#fafafa',
+    opacity: 0.5,
+  },
+  quickAddButton: {
+    backgroundColor: '#f5f5f5',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  quickAddButtonDisabled: {
+    backgroundColor: '#e8e8e8',
+    opacity: 0.5,
+  },
+  purchasedSection: {
+    marginTop: 16,
+  },
+  purchasedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  purchasedHeaderText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
   },
 });

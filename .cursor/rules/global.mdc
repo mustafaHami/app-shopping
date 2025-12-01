@@ -11,5 +11,5 @@ alwaysApply: true
 - Provide explanations only when explicitly asked.
 - Avoid repetitions and unnecessary wording.
 - Stay concise and organized in all responses.
-- Once the implementation is complete, not necessary to explain what was completed
+- Once the implementation is complete, not necessary to explain what was completed and not cesessary to make a quick summary
 - After generating a Prisma migration, quickly check that all tables exist before ALTER TABLE and that enums/types are not created/altered in the wrong order. Do not modify old migrations that are already deployed.

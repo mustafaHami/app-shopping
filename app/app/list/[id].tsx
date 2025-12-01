@@ -66,15 +66,15 @@ export default function ListDetailsScreen() {
   const updateQuantity = useUpdateQuantity();
   const uploadImage = useUploadItemImage();
 
-  // Auto-focus quick add field when screen loads (only once on mount)
+  // Auto-focus quick add field when screen loads (only if list is empty)
   useFocusEffect(
     useCallback(() => {
-      if (canAddEditDeleteItems(list)) {
+      if (canAddEditDeleteItems(list) && (!items || items.length === 0)) {
         setTimeout(() => quickAddInputRef.current?.focus(), 300);
       }
       // Don't refetch - let React Query's staleTime handle when to fetch
       // Users can pull-to-refresh manually if they want fresh data
-    }, [list]),
+    }, [list, items]),
   );
 
   const handleRefresh = useCallback(() => {

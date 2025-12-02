@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +23,19 @@ import {
   useRemoveMember,
   useCancelInvitation,
 } from '@/src/features/members/hooks/use-members';
-import { MAIN_COLOR, ERROR_COLOR } from '@/src/constants/theme';
+import {
+  PRIMARY_COLOR,
+  SECONDARY_COLOR,
+  ERROR_COLOR,
+  ACCENT_ORANGE,
+  BG_TINT_PRIMARY,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  TEXT_MUTED,
+  BorderRadius,
+  Shadows,
+  Spacing,
+} from '@/src/constants/theme';
 import type { ListMember, Invitation } from '@/src/features/members/types';
 import { RoleBadge } from '@/src/components/ui/RoleBadge';
 
@@ -32,11 +45,30 @@ export default function MembersScreen() {
   const [inviteePseudonym, setInviteePseudonym] = useState('');
   const [selectedRole, setSelectedRole] = useState<'READER' | 'WRITER'>('READER');
 
+  // FAB animation
+  const fabScale = useRef(new Animated.Value(1)).current;
+
   const { data: membersData, isLoading, refetch, isRefetching } = useListMembers(id!);
   const sendInvitation = useSendInvitation();
   const updateMemberRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const cancelInvitation = useCancelInvitation();
+
+  const handleFabPressIn = () => {
+    Animated.spring(fabScale, {
+      toValue: 0.9,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleFabPressOut = () => {
+    Animated.spring(fabScale, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const handleSendInvitation = async () => {
     if (!inviteePseudonym.trim()) {
@@ -117,7 +149,7 @@ export default function MembersScreen() {
     return (
       <View style={styles.centerContainer}>
         <Stack.Screen options={{ title: 'Members' }} />
-        <ActivityIndicator size="large" color={MAIN_COLOR} />
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
     );
   }
@@ -136,8 +168,8 @@ export default function MembersScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor={MAIN_COLOR}
-            colors={[MAIN_COLOR]}
+            tintColor={PRIMARY_COLOR}
+            colors={[PRIMARY_COLOR]}
           />
         }
       >
@@ -148,7 +180,9 @@ export default function MembersScreen() {
             membersData.members.map(member => (
               <View key={member.id} style={styles.card}>
                 <View style={styles.cardContent}>
-                  <Ionicons name="person" size={24} color={MAIN_COLOR} />
+                  <View style={styles.personIconWrapper}>
+                    <Ionicons name="person" size={20} color={PRIMARY_COLOR} />
+                  </View>
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardEmail}>{member.userPseudonym}</Text>
                     <RoleBadge role={member.role} />
@@ -159,7 +193,7 @@ export default function MembersScreen() {
                     style={styles.actionButton}
                     onPress={() => handleChangeRole(member)}
                   >
-                    <Ionicons name="swap-horizontal" size={20} color={MAIN_COLOR} />
+                    <Ionicons name="swap-horizontal" size={20} color={PRIMARY_COLOR} />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.actionButton}
@@ -182,17 +216,25 @@ export default function MembersScreen() {
             membersData.invitations.map(invitation => (
               <View key={invitation.id} style={styles.card}>
                 <View style={styles.cardContent}>
-                  <Ionicons
-                    name="mail"
-                    size={24}
-                    color={
-                      invitation.status === 'PENDING'
-                        ? '#FFA500'
-                        : invitation.status === 'ACCEPTED'
-                          ? '#4CAF50'
-                          : '#999'
-                    }
-                  />
+                  <View
+                    style={[
+                      styles.mailIconWrapper,
+                      invitation.status === 'PENDING' && styles.mailIconWrapperPending,
+                      invitation.status === 'ACCEPTED' && styles.mailIconWrapperAccepted,
+                    ]}
+                  >
+                    <Ionicons
+                      name="mail"
+                      size={20}
+                      color={
+                        invitation.status === 'PENDING'
+                          ? ACCENT_ORANGE
+                          : invitation.status === 'ACCEPTED'
+                            ? PRIMARY_COLOR
+                            : TEXT_MUTED
+                      }
+                    />
+                  </View>
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardEmail}>{invitation.inviteePseudonym}</Text>
                     <View style={styles.invitationMeta}>
@@ -236,9 +278,17 @@ export default function MembersScreen() {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => setInviteModalVisible(true)}>
-        <Ionicons name="person-add" size={28} color="#fff" />
-      </TouchableOpacity>
+      <Animated.View style={[styles.fabWrapper, { transform: [{ scale: fabScale }] }]}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setInviteModalVisible(true)}
+          onPressIn={handleFabPressIn}
+          onPressOut={handleFabPressOut}
+          activeOpacity={1}
+        >
+          <Ionicons name="person-add" size={28} color="#fff" />
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Invite Modal */}
       <Modal
@@ -260,7 +310,7 @@ export default function MembersScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Invite Member</Text>
               <TouchableOpacity onPress={() => setInviteModalVisible(false)}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={28} color={TEXT_PRIMARY} />
               </TouchableOpacity>
             </View>
 
@@ -270,6 +320,7 @@ export default function MembersScreen() {
               value={inviteePseudonym}
               onChangeText={setInviteePseudonym}
               placeholder="username"
+              placeholderTextColor={TEXT_MUTED}
               autoCapitalize="none"
               autoFocus
             />
@@ -308,9 +359,10 @@ export default function MembersScreen() {
               style={styles.submitButton}
               onPress={handleSendInvitation}
               disabled={sendInvitation.isPending}
+              activeOpacity={0.8}
             >
               {sendInvitation.isPending ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={TEXT_PRIMARY} />
               ) : (
                 <Text style={styles.submitButtonText}>Send Invitation</Text>
               )}
@@ -325,53 +377,73 @@ export default function MembersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: BG_TINT_PRIMARY,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: BG_TINT_PRIMARY,
   },
   content: {
-    padding: 16,
+    padding: Spacing.md,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: Spacing.lg,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
-    marginBottom: 12,
+    color: TEXT_PRIMARY,
+    marginBottom: Spacing.md,
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    ...Shadows.small,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   cardContent: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  personIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: `${PRIMARY_COLOR}20`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mailIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mailIconWrapperPending: {
+    backgroundColor: `${ACCENT_ORANGE}20`,
+  },
+  mailIconWrapperAccepted: {
+    backgroundColor: `${PRIMARY_COLOR}20`,
+  },
   cardInfo: {
-    marginLeft: 12,
+    marginLeft: Spacing.md,
     flex: 1,
   },
   cardEmail: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: TEXT_PRIMARY,
     marginBottom: 4,
   },
   invitationMeta: {
@@ -383,30 +455,31 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 4,
+    borderRadius: BorderRadius.sm,
   },
   statusBadgePending: {
-    backgroundColor: '#FFF4E6',
+    backgroundColor: `${ACCENT_ORANGE}30`,
   },
   statusBadgeAccepted: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: `${PRIMARY_COLOR}30`,
   },
   statusBadgeDeclined: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#f5f5f5',
   },
   statusBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statusBadgeTextPending: {
-    color: '#F57C00',
+    color: '#c47800',
   },
   statusBadgeTextAccepted: {
-    color: '#388E3C',
+    color: '#2a7a4e',
   },
   statusBadgeTextDeclined: {
-    color: '#999',
+    color: TEXT_MUTED,
   },
   cardActions: {
     flexDirection: 'row',
@@ -417,21 +490,23 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#999',
+    color: TEXT_MUTED,
     textAlign: 'center',
-    paddingVertical: 16,
+    paddingVertical: Spacing.md,
   },
-  fab: {
+  fabWrapper: {
     position: 'absolute',
     right: 20,
     bottom: 20,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: MAIN_COLOR,
+    backgroundColor: PRIMARY_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: MAIN_COLOR,
+    shadowColor: PRIMARY_COLOR,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -444,63 +519,71 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
     minHeight: 400,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: Spacing.lg,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: TEXT_PRIMARY,
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    color: TEXT_SECONDARY,
+    marginBottom: Spacing.sm,
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#fafafa',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: Spacing.lg,
+    borderWidth: 1.5,
+    borderColor: '#e8e8e8',
+    color: TEXT_PRIMARY,
   },
   roleSelector: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: Spacing.lg,
   },
   roleButton: {
     flex: 1,
-    padding: 16,
-    borderRadius: 12,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     backgroundColor: '#f5f5f5',
     alignItems: 'center',
   },
   roleButtonActive: {
-    backgroundColor: MAIN_COLOR,
+    backgroundColor: PRIMARY_COLOR,
   },
   roleButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: TEXT_SECONDARY,
   },
   roleButtonTextActive: {
     color: '#fff',
   },
   submitButton: {
-    backgroundColor: MAIN_COLOR,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
     alignItems: 'center',
+    shadowColor: PRIMARY_COLOR,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   submitButtonText: {
     fontSize: 16,

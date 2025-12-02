@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signInSchema } from '../schemas/auth-schema';
 import { SignInData } from '../types';
 import { useSignIn } from '../hooks/use-auth';
-import { MAIN_COLOR } from '@/src/constants/theme';
+import {
+  PRIMARY_COLOR,
+  SECONDARY_COLOR,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  TEXT_MUTED,
+  ERROR_COLOR,
+  BorderRadius,
+  Spacing,
+} from '@/src/constants/theme';
 import { showToast } from '@/src/utils/toast';
 
 interface SignInFormProps {
@@ -16,6 +26,9 @@ interface SignInFormProps {
 export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
   const { mutate: signIn, isPending } = useSignIn();
   const [showPassword, setShowPassword] = useState(false);
+
+  // Button animation
+  const buttonScale = useRef(new Animated.Value(1)).current;
 
   const {
     control,
@@ -28,6 +41,22 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
       password: '',
     },
   });
+
+  const handlePressIn = () => {
+    Animated.spring(buttonScale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(buttonScale, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const onSubmit = (data: SignInData) => {
     signIn(data, {
@@ -45,16 +74,19 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign In</Text>
+      <Text style={styles.title}>Welcome Back</Text>
+      <Text style={styles.subtitle}>Sign in to continue</Text>
 
       <Controller
         control={control}
         name="pseudonym"
         render={({ field: { onChange, onBlur, value } }) => (
           <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Pseudonym</Text>
             <TextInput
               style={[styles.input, errors.pseudonym && styles.inputError]}
-              placeholder="Pseudonym"
+              placeholder="Enter your pseudonym"
+              placeholderTextColor={TEXT_MUTED}
               autoCapitalize="none"
               onBlur={onBlur}
               onChangeText={onChange}
@@ -71,10 +103,12 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
         name="password"
         render={({ field: { onChange, onBlur, value } }) => (
           <View style={styles.fieldContainer}>
-            <View style={{ position: 'relative' }}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.passwordContainer}>
               <TextInput
-                style={[styles.input, errors.password && styles.inputError]}
-                placeholder="Password"
+                style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
+                placeholder="Enter your password"
+                placeholderTextColor={TEXT_MUTED}
                 secureTextEntry={!showPassword}
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -82,11 +116,15 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
                 editable={!isPending}
               />
               <TouchableOpacity
-                style={{ position: 'absolute', right: 12, top: 12, zIndex: 10 }}
+                style={styles.eyeButton}
                 onPress={() => setShowPassword(p => !p)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Text>{showPassword ? '🙈' : '👁️'}</Text>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color={TEXT_MUTED}
+                />
               </TouchableOpacity>
             </View>
             {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
@@ -94,17 +132,24 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
         )}
       />
 
-      <TouchableOpacity
-        style={[styles.button, isPending && styles.buttonDisabled]}
-        onPress={handleSubmit(onSubmit)}
-        disabled={isPending}
-      >
-        <Text style={styles.buttonText}>{isPending ? 'Signing In...' : 'Sign In'}</Text>
-      </TouchableOpacity>
+      <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: buttonScale }] }]}>
+        <TouchableOpacity
+          style={[styles.button, isPending && styles.buttonDisabled]}
+          onPress={handleSubmit(onSubmit)}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          disabled={isPending}
+          activeOpacity={1}
+        >
+          <Text style={styles.buttonText}>{isPending ? 'Signing In...' : 'Sign In'}</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
       {onSwitchToSignUp && (
         <TouchableOpacity onPress={onSwitchToSignUp} style={styles.linkButton}>
-          <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+          <Text style={styles.linkText}>
+            Don&apos;t have an account? <Text style={styles.linkTextHighlight}>Sign Up</Text>
+          </Text>
         </TouchableOpacity>
       )}
     </View>
@@ -113,53 +158,97 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: Spacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: '800',
+    color: TEXT_PRIMARY,
+    marginBottom: Spacing.xs,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: TEXT_SECONDARY,
+    marginBottom: Spacing.lg,
     textAlign: 'center',
   },
   fieldContainer: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: TEXT_SECONDARY,
+    marginBottom: Spacing.xs,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#e8e8e8',
+    borderRadius: BorderRadius.md,
+    padding: 14,
     fontSize: 16,
+    backgroundColor: '#fafafa',
+    color: TEXT_PRIMARY,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 14,
+    top: 12,
+    zIndex: 10,
+    padding: 2,
   },
   inputError: {
-    borderColor: '#ff0000',
+    borderColor: ERROR_COLOR,
+    backgroundColor: '#fff5f5',
   },
   errorText: {
-    color: '#ff0000',
+    color: ERROR_COLOR,
     fontSize: 12,
-    marginTop: 4,
+    marginTop: Spacing.xs,
+    fontWeight: '500',
+  },
+  buttonWrapper: {
+    marginTop: Spacing.md,
   },
   button: {
-    backgroundColor: MAIN_COLOR,
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: BorderRadius.md,
+    padding: 16,
     alignItems: 'center',
-    marginTop: 8,
+    shadowColor: PRIMARY_COLOR,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.7,
+    shadowOpacity: 0.1,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   linkButton: {
-    marginTop: 16,
+    marginTop: Spacing.lg,
     alignItems: 'center',
+    paddingVertical: Spacing.sm,
   },
   linkText: {
-    color: MAIN_COLOR,
-    fontSize: 14,
+    color: TEXT_SECONDARY,
+    fontSize: 15,
+  },
+  linkTextHighlight: {
+    color: SECONDARY_COLOR,
+    fontWeight: '700',
   },
 });

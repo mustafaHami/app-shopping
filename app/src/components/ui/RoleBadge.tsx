@@ -1,6 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { Role } from '@/src/features/members/types';
+import {
+  PRIMARY_COLOR,
+  SECONDARY_COLOR,
+  ACCENT_YELLOW,
+  ACCENT_ORANGE,
+  BorderRadius,
+} from '@/src/constants/theme';
 
 interface RoleBadgeProps {
   role: Role;
@@ -34,30 +41,31 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: BorderRadius.sm,
     alignSelf: 'flex-start',
   },
   badgeReader: {
-    backgroundColor: '#F3E5F5',
+    backgroundColor: `${SECONDARY_COLOR}30`, // 30% opacity of secondary
   },
   badgeWriter: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: `${PRIMARY_COLOR}40`, // 40% opacity of primary
   },
   badgeOwner: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: `${ACCENT_ORANGE}40`, // 40% opacity of orange accent
   },
   badgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   badgeTextReader: {
-    color: '#7B1FA2',
+    color: '#2d8a5f', // Darker teal for contrast
   },
   badgeTextWriter: {
-    color: '#1976D2',
+    color: '#2a7a4e', // Darker green for contrast
   },
   badgeTextOwner: {
-    color: '#F57C00',
+    color: '#c47800', // Darker orange for contrast
   },
 });

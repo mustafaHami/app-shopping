@@ -20,7 +20,16 @@ import { ListCard } from '@/src/features/lists/components/list-card';
 import { CreateListForm } from '@/src/features/lists/components/create-list-form';
 import { EditListForm } from '@/src/features/lists/components/edit-list-form';
 import { List } from '@/src/features/lists/types';
-import { MAIN_COLOR } from '@/src/constants/theme';
+import {
+  PRIMARY_COLOR,
+  SECONDARY_COLOR,
+  BG_TINT_PRIMARY,
+  TEXT_PRIMARY,
+  TEXT_MUTED,
+  BorderRadius,
+  Spacing,
+  Shadows,
+} from '@/src/constants/theme';
 import { useCurrentUser, useSignOut } from '@/src/features/auth/hooks/use-auth';
 
 type ListFilter = 'all' | 'my' | 'shared';
@@ -128,7 +137,7 @@ export default function HomeScreen() {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={MAIN_COLOR} />
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
     );
   }
@@ -158,7 +167,7 @@ export default function HomeScreen() {
               onPress={toggleSearch}
               activeOpacity={0.7}
             >
-              <Ionicons name={searchVisible ? 'close' : 'search'} size={24} color={MAIN_COLOR} />
+              <Ionicons name={searchVisible ? 'close' : 'search'} size={24} color={PRIMARY_COLOR} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.createButton}
@@ -167,7 +176,7 @@ export default function HomeScreen() {
               <Ionicons name="add" size={28} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.createButton, { backgroundColor: '#eee', marginLeft: 8 }]}
+              style={styles.logoutButton}
               onPress={() => {
                 signOut(undefined, {
                   onSuccess: () => {
@@ -181,7 +190,7 @@ export default function HomeScreen() {
               disabled={isSigningOut}
               activeOpacity={0.7}
             >
-              <Ionicons name="log-out-outline" size={20} color="#444" />
+              <Ionicons name="log-out-outline" size={20} color="#666" />
             </TouchableOpacity>
           </View>
         </View>
@@ -231,18 +240,18 @@ export default function HomeScreen() {
           ]}
         >
           <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+            <Ionicons name="search" size={20} color={TEXT_MUTED} style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search lists by title..."
-              placeholderTextColor="#999"
+              placeholderTextColor={TEXT_MUTED}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus={searchVisible}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-                <Ionicons name="close-circle" size={20} color="#999" />
+                <Ionicons name="close-circle" size={20} color={TEXT_MUTED} />
               </TouchableOpacity>
             )}
           </View>
@@ -250,6 +259,9 @@ export default function HomeScreen() {
 
         {lists && lists.length === 0 ? (
           <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconWrapper}>
+              <Ionicons name="list-outline" size={48} color={PRIMARY_COLOR} />
+            </View>
             <Text style={styles.emptyText}>No lists yet</Text>
             <Text style={styles.emptySubtext}>Create your first shopping list to get started</Text>
           </View>
@@ -276,8 +288,8 @@ export default function HomeScreen() {
               <RefreshControl
                 refreshing={isRefetching}
                 onRefresh={handleRefresh}
-                tintColor={MAIN_COLOR}
-                colors={[MAIN_COLOR]}
+                tintColor={PRIMARY_COLOR}
+                colors={[PRIMARY_COLOR]}
               />
             }
           />
@@ -301,13 +313,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: BG_TINT_PRIMARY,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: BG_TINT_PRIMARY,
   },
   header: {
     backgroundColor: '#fff',
@@ -319,16 +331,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    ...Shadows.small,
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: TEXT_PRIMARY,
     letterSpacing: -0.5,
   },
   headerActions: {
@@ -339,23 +347,31 @@ const styles = StyleSheet.create({
   searchButton: {
     width: 38,
     height: 38,
-    borderRadius: 24,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: `${PRIMARY_COLOR}20`,
   },
   createButton: {
-    backgroundColor: MAIN_COLOR,
+    backgroundColor: PRIMARY_COLOR,
     width: 38,
     height: 38,
-    borderRadius: 24,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#007AFF',
+    shadowColor: PRIMARY_COLOR,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  logoutButton: {
+    backgroundColor: '#f5f5f5',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchContainer: {
     backgroundColor: '#fff',
@@ -366,11 +382,13 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f8f8',
     marginHorizontal: 20,
     marginVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: '#e8e8e8',
   },
   searchIcon: {
     marginRight: 10,
@@ -378,7 +396,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1a1a1a',
+    color: TEXT_PRIMARY,
     height: 40,
   },
   clearButton: {
@@ -396,14 +414,14 @@ const styles = StyleSheet.create({
   },
   filterTab: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: BorderRadius.md,
     backgroundColor: '#f5f5f5',
     alignItems: 'center',
   },
   filterTabActive: {
-    backgroundColor: MAIN_COLOR,
+    backgroundColor: PRIMARY_COLOR,
   },
   filterTabText: {
     fontSize: 13,
@@ -422,10 +440,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
+  emptyIconWrapper: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: `${PRIMARY_COLOR}20`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
   emptyText: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#999',
+    color: TEXT_MUTED,
     marginBottom: 8,
   },
   emptySubtext: {
@@ -441,7 +468,7 @@ const styles = StyleSheet.create({
   },
   errorSubtext: {
     fontSize: 14,
-    color: '#999',
+    color: TEXT_MUTED,
     textAlign: 'center',
     paddingHorizontal: 32,
   },

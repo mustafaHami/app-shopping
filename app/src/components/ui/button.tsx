@@ -1,6 +1,13 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { MAIN_COLOR, ERROR_COLOR } from '@/src/constants/theme';
+import React, { useRef } from 'react';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, Animated } from 'react-native';
+import {
+  PRIMARY_COLOR,
+  PRIMARY_DARK,
+  SECONDARY_COLOR,
+  ERROR_COLOR,
+  TEXT_PRIMARY,
+  BorderRadius,
+} from '@/src/constants/theme';
 
 interface ButtonProps {
   onPress: () => void;
@@ -22,89 +29,120 @@ export function Button({
   const isDanger = variant === 'danger';
   const isDisabled = disabled || loading;
 
+  // Animation for press feedback
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.button,
-        isPrimary && styles.primaryButton,
-        isSecondary && styles.secondaryButton,
-        isDanger && styles.dangerButton,
-        isDisabled &&
-          (isPrimary
-            ? styles.primaryDisabled
-            : isDanger
-              ? styles.dangerDisabled
-              : styles.secondaryDisabled),
-      ]}
-      onPress={onPress}
-      disabled={isDisabled}
-      activeOpacity={0.7}
-    >
-      {loading ? (
-        <ActivityIndicator color={isPrimary ? '#fff' : isDanger ? '#fff' : '#666'} />
-      ) : (
-        <Text
-          style={[
-            styles.buttonText,
-            isPrimary && styles.primaryText,
-            isSecondary && styles.secondaryText,
-            isDanger && styles.dangerText,
-            isDisabled &&
-              (isPrimary
-                ? styles.primaryTextDisabled
-                : isDanger
-                  ? styles.dangerTextDisabled
-                  : styles.secondaryTextDisabled),
-          ]}
-        >
-          {title}
-        </Text>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={[styles.animatedWrapper, { transform: [{ scale: scaleAnim }] }]}>
+      <TouchableOpacity
+        style={[
+          styles.button,
+          isPrimary && styles.primaryButton,
+          isSecondary && styles.secondaryButton,
+          isDanger && styles.dangerButton,
+          isDisabled &&
+            (isPrimary
+              ? styles.primaryDisabled
+              : isDanger
+                ? styles.dangerDisabled
+                : styles.secondaryDisabled),
+        ]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={isDisabled}
+        activeOpacity={1}
+      >
+        {loading ? (
+          <ActivityIndicator color={isPrimary ? '#fff' : isDanger ? '#fff' : '#666'} />
+        ) : (
+          <Text
+            style={[
+              styles.buttonText,
+              isPrimary && styles.primaryText,
+              isSecondary && styles.secondaryText,
+              isDanger && styles.dangerText,
+              isDisabled &&
+                (isPrimary
+                  ? styles.primaryTextDisabled
+                  : isDanger
+                    ? styles.dangerTextDisabled
+                    : styles.secondaryTextDisabled),
+            ]}
+          >
+            {title}
+          </Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  animatedWrapper: {
+    flex: 1,
+  },
   button: {
     flex: 1,
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   primaryButton: {
-    backgroundColor: MAIN_COLOR,
+    backgroundColor: PRIMARY_COLOR,
+    shadowColor: PRIMARY_COLOR,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   secondaryButton: {
-    backgroundColor: '#F2F2F7',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
   },
   dangerButton: {
     backgroundColor: ERROR_COLOR,
+    shadowColor: ERROR_COLOR,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryDisabled: {
-    backgroundColor: '#A5D6A7',
-    opacity: 0.6,
+    backgroundColor: '#c5f0cf',
+    opacity: 0.8,
     shadowOpacity: 0,
     elevation: 0,
   },
   secondaryDisabled: {
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#F5F5F5',
     opacity: 0.5,
     shadowOpacity: 0,
     elevation: 0,
   },
   dangerDisabled: {
-    backgroundColor: '#FFD6DA',
-    opacity: 0.7,
+    backgroundColor: '#FFB3B9',
+    opacity: 0.8,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -114,7 +152,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: '#fff',
   },
   secondaryText: {
     color: '#3C3C43',
@@ -123,8 +161,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   primaryTextDisabled: {
-    color: '#FFFFFF',
-    opacity: 0.6,
+    color: '#fff',
+    opacity: 0.7,
   },
   secondaryTextDisabled: {
     color: '#3C3C43',

@@ -3,7 +3,19 @@ import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Ionicons } from '@expo/vector-icons';
 import { List } from '../types';
-import { ERROR_COLOR, MAIN_COLOR } from '@/src/constants/theme';
+import {
+  ERROR_COLOR,
+  PRIMARY_COLOR,
+  SECONDARY_COLOR,
+  ACCENT_YELLOW,
+  ACCENT_ORANGE,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  TEXT_MUTED,
+  BorderRadius,
+  Shadows,
+  Spacing,
+} from '@/src/constants/theme';
 
 interface ListCardProps {
   list: List;
@@ -14,12 +26,21 @@ interface ListCardProps {
 
 export function ListCard({ list, onPress, onEdit, onDelete }: ListCardProps) {
   const swipeableRef = useRef<Swipeable>(null);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
   const itemCount = list.items?.length ?? 0;
   const createdDate = new Date(list.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
+
+  const getBadgeStyle = () => {
+    if (list.userRole === 'OWNER') return { bg: `${ACCENT_ORANGE}30`, text: '#c47800' };
+    if (list.userRole === 'WRITER') return { bg: `${PRIMARY_COLOR}30`, text: '#2a7a4e' };
+    if (list.userRole === 'READER') return { bg: `${SECONDARY_COLOR}30`, text: '#2d8a5f' };
+    return null;
+  };
 
   const getBadgeLabel = () => {
     if (list.userRole === 'OWNER') return 'Owner';
@@ -28,7 +49,24 @@ export function ListCard({ list, onPress, onEdit, onDelete }: ListCardProps) {
     return null;
   };
 
+  const badgeStyle = getBadgeStyle();
   const badgeLabel = getBadgeLabel();
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
@@ -47,7 +85,7 @@ export function ListCard({ list, onPress, onEdit, onDelete }: ListCardProps) {
                 onEdit(list);
               }}
             >
-              <Ionicons name="pencil" size={20} color={MAIN_COLOR} />
+              <Ionicons name="pencil" size={20} color={PRIMARY_COLOR} />
               <Text style={[styles.swipeActionText, styles.swipeActionEditText]}>Edit</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -72,25 +110,36 @@ export function ListCard({ list, onPress, onEdit, onDelete }: ListCardProps) {
 
   return (
     <Swipeable ref={swipeableRef} renderRightActions={renderRightActions} overshootRight={false}>
-      <TouchableOpacity style={styles.container} onPress={() => onPress(list)} activeOpacity={0.7}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>{list.title}</Text>
-              {badgeLabel && (
-                <View style={styles.badgeContainer}>
-                  <Text style={styles.badgeText}>{badgeLabel}</Text>
-                </View>
-              )}
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <TouchableOpacity
+          style={styles.container}
+          onPress={() => onPress(list)}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}
+        >
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>{list.title}</Text>
+                {badgeLabel && badgeStyle && (
+                  <View style={[styles.badgeContainer, { backgroundColor: badgeStyle.bg }]}>
+                    <Text style={[styles.badgeText, { color: badgeStyle.text }]}>{badgeLabel}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            {list.description && <Text style={styles.description}>{list.description}</Text>}
+            <View style={styles.footer}>
+              <View style={styles.itemCountContainer}>
+                <Ionicons name="cart-outline" size={14} color={PRIMARY_COLOR} />
+                <Text style={styles.itemCount}>{itemCount} items</Text>
+              </View>
+              <Text style={styles.date}>{createdDate}</Text>
             </View>
           </View>
-          {list.description && <Text style={styles.description}>{list.description}</Text>}
-          <View style={styles.footer}>
-            <Text style={styles.itemCount}>{itemCount} items</Text>
-            <Text style={styles.date}>{createdDate}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
     </Swipeable>
   );
 }
@@ -98,14 +147,12 @@ export function ListCard({ list, onPress, onEdit, onDelete }: ListCardProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    ...Shadows.medium,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   content: {
     flex: 1,
@@ -114,51 +161,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: Spacing.xs,
   },
   titleContainer: {
     flex: 1,
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 6,
+    color: TEXT_PRIMARY,
+    marginBottom: Spacing.xs,
   },
   badgeContainer: {
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
     alignSelf: 'flex-start',
   },
   badgeText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   description: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    color: TEXT_SECONDARY,
+    marginBottom: Spacing.md,
     lineHeight: 20,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     marginTop: 'auto',
+  },
+  itemCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   itemCount: {
     fontSize: 13,
-    color: MAIN_COLOR,
-    fontWeight: '500',
+    color: PRIMARY_COLOR,
+    fontWeight: '600',
   },
   date: {
     fontSize: 12,
-    color: '#999',
+    color: TEXT_MUTED,
   },
   swipeActions: {
     flexDirection: 'row',
@@ -181,7 +232,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   swipeActionEditText: {
-    color: MAIN_COLOR,
+    color: PRIMARY_COLOR,
   },
   swipeActionDeleteText: {
     color: ERROR_COLOR,

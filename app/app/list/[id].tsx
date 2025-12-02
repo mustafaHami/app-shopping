@@ -10,6 +10,7 @@ import {
   RefreshControl,
   TextInput,
   Keyboard,
+  Animated,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,7 +31,18 @@ import { CreateItemForm } from '@/src/features/items/components/create-item-form
 import { EditItemForm } from '@/src/features/items/components/edit-item-form';
 import { ImagePickerModal } from '@/src/features/items/components/image-picker-modal';
 import { ImageViewerModal } from '@/src/features/items/components/image-viewer-modal';
-import { MAIN_COLOR, ERROR_COLOR } from '@/src/constants/theme';
+import {
+  PRIMARY_COLOR,
+  SECONDARY_COLOR,
+  ERROR_COLOR,
+  BG_TINT_PRIMARY,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  TEXT_MUTED,
+  BorderRadius,
+  Shadows,
+  Spacing,
+} from '@/src/constants/theme';
 import { canManageMembers, canCheckItems, canAddEditDeleteItems } from '@/src/utils/permissions';
 
 export default function ListDetailsScreen() {
@@ -45,6 +57,9 @@ export default function ListDetailsScreen() {
   const [showImagePickerForItem, setShowImagePickerForItem] = useState<Item | null>(null);
   const [viewImageForItem, setViewImageForItem] = useState<Item | null>(null);
   const quickAddInputRef = useRef<TextInput>(null);
+
+  // FAB animation
+  const fabScale = useRef(new Animated.Value(1)).current;
 
   const {
     data: list,
@@ -65,6 +80,22 @@ export default function ListDetailsScreen() {
   const createItem = useCreateItem();
   const updateQuantity = useUpdateQuantity();
   const uploadImage = useUploadItemImage();
+
+  const handleFabPressIn = () => {
+    Animated.spring(fabScale, {
+      toValue: 0.9,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleFabPressOut = () => {
+    Animated.spring(fabScale, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
 
   // Auto-focus quick add field when screen loads (only if list is empty)
   useFocusEffect(
@@ -241,7 +272,7 @@ export default function ListDetailsScreen() {
     return (
       <View style={styles.centerContainer}>
         <Stack.Screen options={{ title: 'Loading...' }} />
-        <ActivityIndicator size="large" color={MAIN_COLOR} />
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
     );
   }
@@ -271,7 +302,7 @@ export default function ListDetailsScreen() {
                   }}
                   style={{ marginRight: 8 }}
                 >
-                  <Ionicons name="people" size={24} color={MAIN_COLOR} />
+                  <Ionicons name="people" size={24} color={PRIMARY_COLOR} />
                 </TouchableOpacity>
               ) : null,
           }}
@@ -319,12 +350,17 @@ export default function ListDetailsScreen() {
         {/* Quick Add - Always visible when user can edit */}
         {canAddEditDeleteItems(list) && (
           <View style={styles.quickAddContainer}>
-            <Ionicons name="cart-outline" size={20} color="#999" style={styles.quickAddIcon} />
+            <Ionicons
+              name="cart-outline"
+              size={20}
+              color={PRIMARY_COLOR}
+              style={styles.quickAddIcon}
+            />
             <TextInput
               ref={quickAddInputRef}
               style={styles.quickAddInput}
               placeholder="Add item..."
-              placeholderTextColor="#999"
+              placeholderTextColor={TEXT_MUTED}
               value={quickAddText}
               onChangeText={setQuickAddText}
               onSubmitEditing={handleQuickAdd}
@@ -342,7 +378,7 @@ export default function ListDetailsScreen() {
               <Ionicons
                 name="ellipsis-horizontal"
                 size={20}
-                color={!quickAddText.trim() ? '#ccc' : MAIN_COLOR}
+                color={!quickAddText.trim() ? '#ccc' : PRIMARY_COLOR}
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -355,9 +391,9 @@ export default function ListDetailsScreen() {
               activeOpacity={0.6}
             >
               {createItem.isPending ? (
-                <ActivityIndicator size="small" color={MAIN_COLOR} />
+                <ActivityIndicator size="small" color={PRIMARY_COLOR} />
               ) : (
-                <Ionicons name="add" size={22} color={MAIN_COLOR} />
+                <Ionicons name="add" size={22} color={PRIMARY_COLOR} />
               )}
             </TouchableOpacity>
           </View>
@@ -365,7 +401,9 @@ export default function ListDetailsScreen() {
 
         {!items || filteredItems.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="cart-outline" size={64} color="#ccc" />
+            <View style={styles.emptyIconWrapper}>
+              <Ionicons name="cart-outline" size={48} color={PRIMARY_COLOR} />
+            </View>
             <Text style={styles.emptyText}>
               No items{categoryFilter ? ` in "${categoryFilter}"` : ''}
             </Text>
@@ -383,8 +421,8 @@ export default function ListDetailsScreen() {
               <RefreshControl
                 refreshing={isRefetchingList || isRefetchingItems}
                 onRefresh={handleRefresh}
-                tintColor={MAIN_COLOR}
-                colors={[MAIN_COLOR]}
+                tintColor={PRIMARY_COLOR}
+                colors={[PRIMARY_COLOR]}
               />
             }
           >
@@ -431,7 +469,7 @@ export default function ListDetailsScreen() {
                   <Ionicons
                     name={purchasedExpanded ? 'chevron-up' : 'chevron-down'}
                     size={24}
-                    color="#666"
+                    color={TEXT_SECONDARY}
                   />
                 </TouchableOpacity>
                 {purchasedExpanded &&
@@ -469,9 +507,17 @@ export default function ListDetailsScreen() {
           </ScrollView>
         )}
         {canAddEditDeleteItems(list) && (
-          <TouchableOpacity style={styles.fab} onPress={() => setCreateModalVisible(true)}>
-            <Ionicons name="add" size={32} color="#fff" />
-          </TouchableOpacity>
+          <Animated.View style={[styles.fabWrapper, { transform: [{ scale: fabScale }] }]}>
+            <TouchableOpacity
+              style={styles.fab}
+              onPress={() => setCreateModalVisible(true)}
+              onPressIn={handleFabPressIn}
+              onPressOut={handleFabPressOut}
+              activeOpacity={1}
+            >
+              <Ionicons name="add" size={32} color="#fff" />
+            </TouchableOpacity>
+          </Animated.View>
         )}
         <CreateItemForm
           visible={createModalVisible}
@@ -507,19 +553,19 @@ export default function ListDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: BG_TINT_PRIMARY,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: BG_TINT_PRIMARY,
   },
   scrollView: {
     flex: 1,
   },
   listContent: {
-    padding: 16,
+    padding: Spacing.md,
     paddingBottom: 100,
   },
   emptyContainer: {
@@ -528,11 +574,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
+  emptyIconWrapper: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: `${PRIMARY_COLOR}20`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
   emptyText: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#999',
-    marginTop: 16,
+    color: TEXT_MUTED,
     marginBottom: 8,
   },
   emptySubtext: {
@@ -548,21 +602,23 @@ const styles = StyleSheet.create({
   },
   errorSubtext: {
     fontSize: 14,
-    color: '#999',
+    color: TEXT_MUTED,
     textAlign: 'center',
     paddingHorizontal: 32,
   },
-  fab: {
+  fabWrapper: {
     position: 'absolute',
     right: 20,
     bottom: 20,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: MAIN_COLOR,
+    backgroundColor: PRIMARY_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: MAIN_COLOR,
+    shadowColor: PRIMARY_COLOR,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -571,60 +627,57 @@ const styles = StyleSheet.create({
   filterBarWrapper: {
     maxHeight: 50,
     flexShrink: 0,
+    backgroundColor: '#fff',
   },
   filterBar: {
     backgroundColor: 'transparent',
     paddingVertical: 8,
   },
   filterBarContent: {
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingLeft: Spacing.md,
+    paddingRight: Spacing.md,
     gap: 6,
   },
   filterChip: {
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#ededed',
+    paddingVertical: 8,
+    borderRadius: BorderRadius.md,
+    backgroundColor: '#f5f5f5',
     marginHorizontal: 2,
   },
   filterChipActive: {
-    backgroundColor: MAIN_COLOR,
+    backgroundColor: PRIMARY_COLOR,
   },
   filterChipText: {
     fontSize: 13,
-    color: '#444',
+    fontWeight: '600',
+    color: TEXT_SECONDARY,
   },
   filterChipTextActive: {
     color: '#fff',
-    fontWeight: '700',
   },
   quickAddContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
     marginHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 16,
-    shadowColor: MAIN_COLOR,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 5,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.medium,
     borderWidth: 1.5,
     borderColor: '#f0f0f0',
   },
   quickAddIcon: {
     marginRight: 14,
-    opacity: 0.6,
+    opacity: 0.8,
   },
   quickAddInput: {
     flex: 1,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: TEXT_PRIMARY,
     paddingVertical: 8,
     fontWeight: '500',
   },
@@ -642,7 +695,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   quickAddButton: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: `${PRIMARY_COLOR}20`,
     width: 38,
     height: 38,
     borderRadius: 19,
@@ -651,25 +704,26 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   quickAddButtonDisabled: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: '#f5f5f5',
     opacity: 0.5,
   },
   purchasedSection: {
-    marginTop: 16,
+    marginTop: Spacing.md,
   },
   purchasedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 8,
+    backgroundColor: '#fff',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+    ...Shadows.small,
   },
   purchasedHeaderText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: TEXT_SECONDARY,
   },
 });

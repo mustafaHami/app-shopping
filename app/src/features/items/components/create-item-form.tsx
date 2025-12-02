@@ -16,7 +16,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateItem, useUploadItemImage } from '../hooks/use-items';
 import { Button } from '@/src/components/ui/button';
-import { ERROR_COLOR, MAIN_COLOR } from '@/src/constants/theme';
+import {
+  ERROR_COLOR,
+  PRIMARY_COLOR,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  TEXT_MUTED,
+  BorderRadius,
+  Shadows,
+  Spacing,
+} from '@/src/constants/theme';
 import { CategorySelector } from './category-selector';
 import { ImagePickerModal } from './image-picker-modal';
 
@@ -109,8 +118,13 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
       >
         <View style={styles.modalContent}>
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={styles.modalTitle}>Add New Item</Text>
-            <Text style={styles.errorMessage}>{errorMessage}</Text>
+            <View style={styles.header}>
+              <Text style={styles.modalTitle}>Add New Item</Text>
+              <TouchableOpacity onPress={onClose}>
+                <Ionicons name="close" size={28} color={TEXT_PRIMARY} />
+              </TouchableOpacity>
+            </View>
+            {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
 
             {/* Image Section */}
             <View style={styles.imageSection}>
@@ -124,7 +138,7 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
                       onPress={() => setShowImagePicker(true)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="swap-horizontal" size={20} color={MAIN_COLOR} />
+                      <Ionicons name="swap-horizontal" size={20} color={PRIMARY_COLOR} />
                       <Text style={styles.imageActionText}>Replace</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -157,6 +171,7 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
             <TextInput
               style={styles.input}
               placeholder="e.g., Milk, Bread..."
+              placeholderTextColor={TEXT_MUTED}
               value={title}
               onChangeText={setTitle}
               autoFocus
@@ -169,6 +184,7 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
                 <TextInput
                   style={styles.input}
                   placeholder="1"
+                  placeholderTextColor={TEXT_MUTED}
                   value={quantity}
                   onChangeText={setQuantity}
                   keyboardType="decimal-pad"
@@ -179,6 +195,7 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
                 <TextInput
                   style={styles.input}
                   placeholder="kg, pcs, liters..."
+                  placeholderTextColor={TEXT_MUTED}
                   value={unit}
                   onChangeText={setUnit}
                 />
@@ -191,6 +208,7 @@ export function CreateItemForm({ visible, onClose, listId, allCategories }: Crea
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Any additional notes..."
+              placeholderTextColor={TEXT_MUTED}
               value={notes}
               onChangeText={setNotes}
               multiline
@@ -234,39 +252,46 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
     maxHeight: '90%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 24,
+    color: TEXT_PRIMARY,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-    marginTop: 12,
+    color: TEXT_SECONDARY,
+    marginBottom: Spacing.xs,
+    marginTop: Spacing.md,
   },
   errorMessage: {
     fontSize: 14,
     fontWeight: '700',
     color: ERROR_COLOR,
+    marginBottom: Spacing.sm,
   },
   required: {
-    color: '#FF626F',
+    color: ERROR_COLOR,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#e8e8e8',
+    borderRadius: BorderRadius.md,
     padding: 14,
     fontSize: 16,
     backgroundColor: '#fafafa',
+    color: TEXT_PRIMARY,
   },
   textArea: {
     height: 80,
@@ -283,10 +308,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-    marginTop: 24,
+    marginTop: Spacing.lg,
   },
   imageSection: {
-    marginBottom: 20,
+    marginBottom: Spacing.md,
   },
   imageContainer: {
     alignItems: 'center',
@@ -294,12 +319,12 @@ const styles = StyleSheet.create({
   imagePreview: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
+    borderRadius: BorderRadius.md,
     backgroundColor: '#f0f0f0',
   },
   imageActions: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: Spacing.md,
     gap: 12,
   },
   imageActionButton: {
@@ -307,19 +332,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+    borderRadius: BorderRadius.sm,
+    backgroundColor: `${PRIMARY_COLOR}15`,
     gap: 6,
   },
   imageActionButtonDelete: {
     backgroundColor: '#fff',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: ERROR_COLOR,
   },
   imageActionText: {
     fontSize: 14,
     fontWeight: '600',
-    color: MAIN_COLOR,
+    color: PRIMARY_COLOR,
   },
   imageActionTextDelete: {
     color: ERROR_COLOR,
@@ -327,7 +352,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: '100%',
     height: 150,
-    borderRadius: 12,
+    borderRadius: BorderRadius.md,
     borderWidth: 2,
     borderColor: '#e0e0e0',
     borderStyle: 'dashed',
@@ -336,9 +361,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
   },
   imagePlaceholderText: {
-    marginTop: 12,
+    marginTop: Spacing.md,
     fontSize: 15,
-    color: '#999',
+    color: TEXT_MUTED,
     fontWeight: '500',
   },
 });

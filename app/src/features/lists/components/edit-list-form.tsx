@@ -8,10 +8,20 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useUpdateList } from '../hooks/use-lists';
 import { List } from '../types';
 import { Button } from '@/src/components/ui/button';
+import {
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  TEXT_MUTED,
+  BorderRadius,
+  Shadows,
+  Spacing,
+} from '@/src/constants/theme';
 
 interface EditListFormProps {
   visible: boolean;
@@ -68,19 +78,28 @@ export function EditListForm({ visible, onClose, list }: EditListFormProps) {
         style={styles.modalContainer}
       >
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Edit List</Text>
+          <View style={styles.header}>
+            <Text style={styles.modalTitle}>Edit List</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={28} color={TEXT_PRIMARY} />
+            </TouchableOpacity>
+          </View>
 
+          <Text style={styles.label}>List Title</Text>
           <TextInput
             style={styles.input}
-            placeholder="List Title *"
+            placeholder="e.g., Weekly Groceries"
+            placeholderTextColor={TEXT_MUTED}
             value={title}
             onChangeText={setTitle}
             autoFocus
           />
 
+          <Text style={styles.label}>Description (optional)</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Description (optional)"
+            placeholder="Add a description..."
+            placeholderTextColor={TEXT_MUTED}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -112,24 +131,38 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
     width: '90%',
     maxWidth: 400,
+    ...Shadows.large,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333',
-    marginBottom: 20,
+    color: TEXT_PRIMARY,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: TEXT_SECONDARY,
+    marginBottom: Spacing.xs,
+    marginTop: Spacing.sm,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#e8e8e8',
+    borderRadius: BorderRadius.md,
+    padding: 14,
     fontSize: 16,
-    marginBottom: 16,
+    backgroundColor: '#fafafa',
+    color: TEXT_PRIMARY,
   },
   textArea: {
     height: 80,
@@ -139,5 +172,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
 });

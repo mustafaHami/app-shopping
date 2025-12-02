@@ -36,23 +36,31 @@ export const useSignUp = () => {
   const queryClient = useQueryClient();
 
   return useMutation<AuthSession, Error, SignUpData>({
-    mutationFn: authApi.signUp,
-    onSuccess: async session => {
-      queryClient.setQueryData(['auth', 'session'], session);
-      queryClient.setQueryData(['auth', 'user'], session.user);
+    mutationFn: async (data: SignUpData) => {
+      const session = await authApi.signUp(data);
 
-      // Create default list for new user
+      // Create default list for new user immediately after signup
       try {
         await listsApi.create({
           title: 'First list',
           description: 'Your first shopping list',
         });
-        // Invalidate lists query to show the new default list
-        queryClient.invalidateQueries({ queryKey: ['lists'] });
       } catch (error) {
         console.error('Failed to create default list:', error);
         // Don't throw error, just log it - signup is still successful
       }
+
+      return session;
+    },
+    onSuccess: async session => {
+      queryClient.setQueryData(['auth', 'session'], session);
+      queryClient.setQueryData(['auth', 'user'], session.user);
+
+      // Invalidate lists query to show the new default list
+      await queryClient.invalidateQueries({ queryKey: ['lists'] });
+
+      // Prefetch lists to ensure they're ready when navigating
+      await queryClient.refetchQueries({ queryKey: ['lists'] });
     },
   });
 };
@@ -113,7 +121,8 @@ export const useAuthStateChange = () => {
           refreshToken: session.refresh_token,
           user: {
             id: session.user.id,
-            email: session.user.email!,
+            pseudonym: session.user.user_metadata?.pseudonym || '',
+            email: session.user.email,
             createdAt: session.user.created_at,
           },
           expiresAt: session.expires_at || 0,
@@ -134,7 +143,8 @@ export const useAuthStateChange = () => {
           refreshToken: session.refresh_token,
           user: {
             id: session.user.id,
-            email: session.user.email!,
+            pseudonym: session.user.user_metadata?.pseudonym || '',
+            email: session.user.email,
             createdAt: session.user.created_at,
           },
           expiresAt: session.expires_at || 0,

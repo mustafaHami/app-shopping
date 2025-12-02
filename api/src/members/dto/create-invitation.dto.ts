@@ -1,8 +1,8 @@
-import { IsEmail, IsEnum } from 'class-validator';
+import { IsString, IsEnum } from 'class-validator';
 
 export class CreateInvitationDto {
-  @IsEmail()
-  inviteeEmail: string;
+  @IsString()
+  inviteePseudonym: string;
 
   @IsEnum(['READER', 'WRITER'])
   role: 'READER' | 'WRITER';

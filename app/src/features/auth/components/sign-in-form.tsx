@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signInSchema } from '../schemas/auth-schema';
 import { SignInData } from '../types';
 import { useSignIn } from '../hooks/use-auth';
 import { MAIN_COLOR } from '@/src/constants/theme';
+import { showToast } from '@/src/utils/toast';
 
 interface SignInFormProps {
   onSuccess?: () => void;
@@ -23,7 +24,7 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
   } = useForm<SignInData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: '',
+      pseudonym: '',
       password: '',
     },
   });
@@ -34,7 +35,10 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
         onSuccess?.();
       },
       onError: error => {
-        Alert.alert('Error', error.message || 'Failed to sign in');
+        showToast.error({
+          title: 'Sign In Failed',
+          message: error.message || 'Failed to sign in',
+        });
       },
     });
   };
@@ -45,20 +49,19 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
 
       <Controller
         control={control}
-        name="email"
+        name="pseudonym"
         render={({ field: { onChange, onBlur, value } }) => (
           <View style={styles.fieldContainer}>
             <TextInput
-              style={[styles.input, errors.email && styles.inputError]}
-              placeholder="Email"
+              style={[styles.input, errors.pseudonym && styles.inputError]}
+              placeholder="Pseudonym"
               autoCapitalize="none"
-              keyboardType="email-address"
               onBlur={onBlur}
               onChangeText={onChange}
               value={value}
               editable={!isPending}
             />
-            {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+            {errors.pseudonym && <Text style={styles.errorText}>{errors.pseudonym.message}</Text>}
           </View>
         )}
       />

@@ -29,7 +29,7 @@ import { RoleBadge } from '@/src/components/ui/RoleBadge';
 export default function MembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
-  const [inviteeEmail, setInviteeEmail] = useState('');
+  const [inviteePseudonym, setInviteePseudonym] = useState('');
   const [selectedRole, setSelectedRole] = useState<'READER' | 'WRITER'>('READER');
 
   const { data: membersData, isLoading, refetch, isRefetching } = useListMembers(id!);
@@ -39,18 +39,18 @@ export default function MembersScreen() {
   const cancelInvitation = useCancelInvitation();
 
   const handleSendInvitation = async () => {
-    if (!inviteeEmail.trim()) {
-      Alert.alert('Error', 'Please enter an email address');
+    if (!inviteePseudonym.trim()) {
+      Alert.alert('Error', 'Please enter a pseudonym');
       return;
     }
 
     try {
       await sendInvitation.mutateAsync({
         listId: id!,
-        data: { inviteeEmail, role: selectedRole },
+        data: { inviteePseudonym, role: selectedRole },
       });
       setInviteModalVisible(false);
-      setInviteeEmail('');
+      setInviteePseudonym('');
       setSelectedRole('READER');
     } catch (_error: any) {
       Alert.alert('Error', _error.message || 'Failed to send invitation');
@@ -97,7 +97,7 @@ export default function MembersScreen() {
   };
 
   const handleCancelInvitation = (invitation: Invitation) => {
-    Alert.alert('Cancel Invitation', `Cancel invitation to ${invitation.inviteeEmail}?`, [
+    Alert.alert('Cancel Invitation', `Cancel invitation to ${invitation.inviteePseudonym}?`, [
       { text: 'No', style: 'cancel' },
       {
         text: 'Yes, Cancel',
@@ -150,7 +150,7 @@ export default function MembersScreen() {
                 <View style={styles.cardContent}>
                   <Ionicons name="person" size={24} color={MAIN_COLOR} />
                   <View style={styles.cardInfo}>
-                    <Text style={styles.cardEmail}>{member.userEmail}</Text>
+                    <Text style={styles.cardEmail}>{member.userPseudonym}</Text>
                     <RoleBadge role={member.role} />
                   </View>
                 </View>
@@ -194,7 +194,7 @@ export default function MembersScreen() {
                     }
                   />
                   <View style={styles.cardInfo}>
-                    <Text style={styles.cardEmail}>{invitation.inviteeEmail}</Text>
+                    <Text style={styles.cardEmail}>{invitation.inviteePseudonym}</Text>
                     <View style={styles.invitationMeta}>
                       <RoleBadge role={invitation.role} />
                       <View
@@ -264,13 +264,12 @@ export default function MembersScreen() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Pseudonym</Text>
             <TextInput
               style={styles.input}
-              value={inviteeEmail}
-              onChangeText={setInviteeEmail}
-              placeholder="user@example.com"
-              keyboardType="email-address"
+              value={inviteePseudonym}
+              onChangeText={setInviteePseudonym}
+              placeholder="username"
               autoCapitalize="none"
               autoFocus
             />

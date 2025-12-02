@@ -11,8 +11,10 @@ export const membersApi = {
     return apiClient<ListMembersData>(`/members/lists/${listId}`);
   },
 
-  searchUserByEmail: async (email: string): Promise<{ email: string }> => {
-    return apiClient<{ email: string }>(`/members/search?email=${encodeURIComponent(email)}`);
+  searchUserByPseudonym: async (pseudonym: string): Promise<{ pseudonym: string }> => {
+    return apiClient<{ pseudonym: string }>(
+      `/members/search?pseudonym=${encodeURIComponent(pseudonym)}`,
+    );
   },
 
   sendInvitation: async (listId: string, data: CreateInvitationInput): Promise<Invitation> => {

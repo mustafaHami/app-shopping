@@ -5,6 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useAuthStateChange, useSession } from '@/src/features/auth/hooks/use-auth';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '@/src/components/ui/CustomToast';
 import 'react-native-reanimated';
 
 export const unstable_settings = {
@@ -49,6 +51,7 @@ function RootLayoutNav() {
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
+      <Toast config={toastConfig} />
     </ThemeProvider>
   );
 }

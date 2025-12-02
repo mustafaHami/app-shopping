@@ -30,7 +30,9 @@ export class SupabaseService {
    * @param token - The JWT token to verify
    * @returns The user object if valid, null otherwise
    */
-  async verifyToken(token: string): Promise<{ id: string; email: string } | null> {
+  async verifyToken(
+    token: string,
+  ): Promise<{ id: string; email?: string; pseudonym: string } | null> {
     try {
       const {
         data: { user },
@@ -43,7 +45,8 @@ export class SupabaseService {
 
       return {
         id: user.id,
-        email: user.email || '',
+        email: user.email,
+        pseudonym: user.user_metadata?.pseudonym || '',
       };
     } catch (error) {
       return null;
@@ -64,12 +67,10 @@ export class SupabaseService {
     file: Buffer,
     contentType: string,
   ): Promise<string> {
-    const { data, error } = await this.supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        contentType,
-        upsert: true,
-      });
+    const { data, error } = await this.supabase.storage.from(bucket).upload(path, file, {
+      contentType,
+      upsert: true,
+    });
 
     if (error) {
       throw new Error(`Failed to upload image: ${error.message}`);

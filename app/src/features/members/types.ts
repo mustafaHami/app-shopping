@@ -7,6 +7,7 @@ export interface ListMember {
   listId: string;
   userId: string;
   userEmail?: string;
+  userPseudonym: string;
   role: Role;
   addedAt: string;
 }
@@ -16,7 +17,8 @@ export interface Invitation {
   listId: string;
   inviterId: string;
   inviteeId: string;
-  inviteeEmail: string;
+  inviteeEmail?: string;
+  inviteePseudonym: string;
   role: Role;
   status: InvitationStatus;
   createdAt: string;

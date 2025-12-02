@@ -52,26 +52,26 @@ export class MembersService {
     };
   }
 
-  // Search user by email
-  async searchUserByEmail(email: string) {
+  // Search user by pseudonym
+  async searchUserByPseudonym(pseudonym: string) {
     const supabase = this.supabaseService.getClient();
 
-    // Query Supabase admin API to find user by email
+    // Query Supabase admin API to find user by pseudonym (using user_metadata)
     const { data, error } = await supabase.auth.admin.listUsers();
 
     if (error) {
       throw new BadRequestException('Failed to search users');
     }
 
-    const user = data.users.find(u => u.email === email);
+    const user = data.users.find(u => u.user_metadata?.pseudonym === pseudonym);
 
     if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
+      throw new NotFoundException(`User with pseudonym ${pseudonym} not found`);
     }
 
     return {
       id: user.id,
-      email: user.email,
+      pseudonym: user.user_metadata?.pseudonym || pseudonym,
     };
   }
 
@@ -94,7 +94,7 @@ export class MembersService {
       throw new ForbiddenException('Only the owner can invite members');
     }
 
-    // Find invitee by email in Supabase
+    // Find invitee by pseudonym in Supabase
     const supabase = this.supabaseService.getClient();
     const { data, error } = await supabase.auth.admin.listUsers();
 
@@ -102,13 +102,14 @@ export class MembersService {
       throw new BadRequestException('Failed to search users');
     }
 
-    const inviteeUser = data.users.find(u => u.email === dto.inviteeEmail);
+    const inviteeUser = data.users.find(u => u.user_metadata?.pseudonym === dto.inviteePseudonym);
 
     if (!inviteeUser) {
-      throw new NotFoundException(`User with email ${dto.inviteeEmail} not found`);
+      throw new NotFoundException(`User with pseudonym ${dto.inviteePseudonym} not found`);
     }
 
     const inviteeId = inviteeUser.id;
+    const inviteePseudonym = inviteeUser.user_metadata?.pseudonym || dto.inviteePseudonym;
 
     // Prevent owner from inviting themselves
     if (inviteeId === userId) {
@@ -135,7 +136,8 @@ export class MembersService {
         listId,
         inviterId: userId,
         inviteeId,
-        inviteeEmail: dto.inviteeEmail,
+        inviteeEmail: inviteeUser.email,
+        inviteePseudonym,
         role: dto.role,
         status: InvitationStatus.PENDING,
       },
@@ -246,13 +248,14 @@ export class MembersService {
 
     // If accepted, create a list member
     if (dto.status === InvitationStatus.ACCEPTED) {
-      const userEmail = invitation.inviteeEmail;
-      if (!userEmail) throw new NotFoundException('User not found');
+      const userPseudonym = invitation.inviteePseudonym;
+      if (!userPseudonym) throw new NotFoundException('User not found');
       await this.prisma.listMember.create({
         data: {
           listId: invitation.listId,
           userId: invitation.inviteeId,
-          userEmail,
+          userEmail: invitation.inviteeEmail,
+          userPseudonym,
           role: invitation.role,
         },
       });

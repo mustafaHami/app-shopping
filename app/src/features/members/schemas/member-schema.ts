@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const roleSchema = z.enum(['READER', 'WRITER']);
 
 export const createInvitationSchema = z.object({
-  inviteeEmail: z.string().email(),
+  inviteePseudonym: z.string().min(3, 'Pseudonym must be at least 3 characters'),
   role: roleSchema,
 });
 

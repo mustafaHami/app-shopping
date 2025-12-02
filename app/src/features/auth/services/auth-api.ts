@@ -1,15 +1,22 @@
-
 import { supabase } from '@/src/lib/supabase';
 import { SignUpData, SignInData, AuthSession, AuthUser } from '../types';
 
 export const authApi = {
   /**
-   * Sign up a new user with email and password
+   * Sign up a new user with pseudonym and password
    */
   signUp: async (data: SignUpData): Promise<AuthSession> => {
+    // Generate a temporary email based on pseudonym for Supabase
+    const tempEmail = `${data.pseudonym.toLowerCase()}@temp.local`;
+
     const { data: authData, error } = await supabase.auth.signUp({
-      email: data.email,
+      email: tempEmail,
       password: data.password,
+      options: {
+        data: {
+          pseudonym: data.pseudonym,
+        },
+      },
     });
 
     if (error) {
@@ -25,7 +32,8 @@ export const authApi = {
       refreshToken: authData.session.refresh_token,
       user: {
         id: authData.user.id,
-        email: authData.user.email!,
+        pseudonym: authData.user.user_metadata?.pseudonym || data.pseudonym,
+        email: authData.user.email,
         createdAt: authData.user.created_at,
       },
       expiresAt: authData.session.expires_at || 0,
@@ -33,11 +41,14 @@ export const authApi = {
   },
 
   /**
-   * Sign in an existing user with email and password
+   * Sign in an existing user with pseudonym and password
    */
   signIn: async (data: SignInData): Promise<AuthSession> => {
+    // Generate email from pseudonym
+    const tempEmail = `${data.pseudonym.toLowerCase()}@temp.local`;
+
     const { data: authData, error } = await supabase.auth.signInWithPassword({
-      email: data.email,
+      email: tempEmail,
       password: data.password,
     });
 
@@ -54,7 +65,8 @@ export const authApi = {
       refreshToken: authData.session.refresh_token,
       user: {
         id: authData.user.id,
-        email: authData.user.email!,
+        pseudonym: authData.user.user_metadata?.pseudonym || data.pseudonym,
+        email: authData.user.email,
         createdAt: authData.user.created_at,
       },
       expiresAt: authData.session.expires_at || 0,
@@ -94,7 +106,8 @@ export const authApi = {
       refreshToken: session.refresh_token,
       user: {
         id: session.user.id,
-        email: session.user.email!,
+        pseudonym: session.user.user_metadata?.pseudonym || '',
+        email: session.user.email,
         createdAt: session.user.created_at,
       },
       expiresAt: session.expires_at || 0,
@@ -120,7 +133,8 @@ export const authApi = {
 
     return {
       id: user.id,
-      email: user.email!,
+      pseudonym: user.user_metadata?.pseudonym || '',
+      email: user.email,
       createdAt: user.created_at,
     };
   },
@@ -136,4 +150,3 @@ export const authApi = {
     }
   },
 };
-

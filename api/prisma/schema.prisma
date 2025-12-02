@@ -19,28 +19,30 @@ model List {
 }
 
 model ListMember {
-  id        String   @id @default(uuid()) @db.Uuid
-  listId    String   @db.Uuid
-  userId    String   @db.Uuid
-  role      Role     @default(WRITER)
-  addedAt   DateTime @default(now())
-  userEmail String?
-  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid()) @db.Uuid
+  listId        String   @db.Uuid
+  userId        String   @db.Uuid
+  role          Role     @default(WRITER)
+  addedAt       DateTime @default(now())
+  userEmail     String?
+  userPseudonym String
+  list          List     @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@unique([listId, userId])
 }
 
 model Invitation {
-  id           String           @id @default(uuid()) @db.Uuid
-  listId       String           @db.Uuid
-  inviterId    String           @db.Uuid
-  inviteeId    String           @db.Uuid
-  role         Role             @default(READER)
-  status       InvitationStatus @default(PENDING)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  inviteeEmail String
-  list         List             @relation(fields: [listId], references: [id], onDelete: Cascade)
+  id               String           @id @default(uuid()) @db.Uuid
+  listId           String           @db.Uuid
+  inviterId        String           @db.Uuid
+  inviteeId        String           @db.Uuid
+  role             Role             @default(READER)
+  status           InvitationStatus @default(PENDING)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  inviteeEmail     String?
+  inviteePseudonym String
+  list             List             @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@unique([listId, inviteeId])
 }

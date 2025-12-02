@@ -6,7 +6,8 @@ export type SignInData = z.infer<typeof signInSchema>;
 
 export interface AuthUser {
   id: string;
-  email: string;
+  pseudonym: string;
+  email?: string;
   createdAt: string;
 }
 
@@ -21,4 +22,3 @@ export interface AuthError {
   message: string;
   status?: number;
 }
-

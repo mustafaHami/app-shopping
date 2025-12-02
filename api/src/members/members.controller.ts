@@ -28,10 +28,10 @@ export class MembersController {
     return this.membersService.getListMembers(listId, user.id);
   }
 
-  // Search user by email
+  // Search user by pseudonym
   @Get('search')
-  searchUser(@Query('email') email: string) {
-    return this.membersService.searchUserByEmail(email);
+  searchUser(@Query('pseudonym') pseudonym: string) {
+    return this.membersService.searchUserByPseudonym(pseudonym);
   }
 
   // Send invitation

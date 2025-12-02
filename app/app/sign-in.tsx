@@ -88,7 +88,7 @@ export default function SignInScreen() {
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <Text style={styles.appName}>ShoppL</Text>
+            <Text style={styles.appName}>Shoply</Text>
             <Text style={styles.tagline}>Your smart shopping companion</Text>
           </Animated.View>
 

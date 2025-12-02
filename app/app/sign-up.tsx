@@ -88,7 +88,7 @@ export default function SignUpScreen() {
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <Text style={styles.appName}>ShoppL</Text>
+            <Text style={styles.appName}>Shoply</Text>
             <Text style={styles.tagline}>Create your account</Text>
           </Animated.View>
 

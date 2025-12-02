@@ -11,6 +11,7 @@ import {
   Animated,
   RefreshControl,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,6 +30,7 @@ import {
   BorderRadius,
   Spacing,
   Shadows,
+  Gradients,
 } from '@/src/constants/theme';
 import { useCurrentUser, useSignOut } from '@/src/features/auth/hooks/use-auth';
 
@@ -159,21 +161,26 @@ export default function HomeScreen() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>ShoppL</Text>
+        <LinearGradient
+          colors={Gradients.authBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.header}
+        >
+          <Text style={styles.headerTitle}>Shoply</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.searchButton}
               onPress={toggleSearch}
               activeOpacity={0.7}
             >
-              <Ionicons name={searchVisible ? 'close' : 'search'} size={24} color={PRIMARY_COLOR} />
+              <Ionicons name={searchVisible ? 'close' : 'search'} size={24} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.createButton}
               onPress={() => setCreateModalVisible(true)}
             >
-              <Ionicons name="add" size={28} color="#fff" />
+              <Ionicons name="add" size={28} color={PRIMARY_COLOR} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.logoutButton}
@@ -190,10 +197,10 @@ export default function HomeScreen() {
               disabled={isSigningOut}
               activeOpacity={0.7}
             >
-              <Ionicons name="log-out-outline" size={20} color="#666" />
+              <Ionicons name="log-out-outline" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Filter Tabs */}
         <View style={styles.filterTabsContainer}>
@@ -322,22 +329,22 @@ const styles = StyleSheet.create({
     backgroundColor: BG_TINT_PRIMARY,
   },
   header: {
-    backgroundColor: '#fff',
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    ...Shadows.small,
+    ...Shadows.medium,
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: '800',
-    color: TEXT_PRIMARY,
+    color: '#fff',
     letterSpacing: -0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   headerActions: {
     flexDirection: 'row',
@@ -350,23 +357,23 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: `${PRIMARY_COLOR}20`,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   createButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     width: 38,
     height: 38,
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   logoutButton: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     width: 38,
     height: 38,
     borderRadius: 19,

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { useAuthStateChange, useSession } from '@/src/features/auth/hooks/use-auth';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '@/src/components/ui/CustomToast';
+import { PRIMARY_COLOR } from '@/src/constants/theme';
 import 'react-native-reanimated';
 
 export const unstable_settings = {
@@ -44,7 +45,18 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: PRIMARY_COLOR,
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: '700',
+          },
+          headerShadowVisible: true,
+        }}
+      >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="sign-up" options={{ headerShown: false }} />

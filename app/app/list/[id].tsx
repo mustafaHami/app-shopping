@@ -302,7 +302,7 @@ export default function ListDetailsScreen() {
                   }}
                   style={{ marginRight: 8 }}
                 >
-                  <Ionicons name="people" size={24} color={PRIMARY_COLOR} />
+                  <Ionicons name="people" size={24} color="#fff" />
                 </TouchableOpacity>
               ) : null,
           }}

@@ -69,7 +69,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
           setTimeout(() => {
             showToast.success({
               title: 'Account Created! 🎉',
-              message: 'Welcome to Shopping List',
+              message: 'Welcome to Shoply',
             });
           }, 300);
         }, 100);

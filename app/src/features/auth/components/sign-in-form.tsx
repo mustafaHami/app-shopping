@@ -82,7 +82,6 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
         name="pseudonym"
         render={({ field: { onChange, onBlur, value } }) => (
           <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Pseudonym</Text>
             <TextInput
               style={[styles.input, errors.pseudonym && styles.inputError]}
               placeholder="Enter your pseudonym"
@@ -103,7 +102,6 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
         name="password"
         render={({ field: { onChange, onBlur, value } }) => (
           <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Password</Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}

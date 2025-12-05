@@ -160,3 +160,13 @@ On the main lists screen, the user should see both:
 - [x] Show a loading indicator while the image is being uploaded // 2025-11-30: loading state in submit button during upload
 - [x] Display an error message if the upload fails (network issue, file too large, etc.) // 2025-11-30: Alert.alert for upload errors with error messages
 - [x] Ensure images are optimized or compressed before upload (optional but recommended for performance) // 2025-11-30: expo-image-picker quality set to 0.8 and allowsEditing for cropping
+
+# Functional checklist — ShoppingList (Phase 6)
+
+## List Creation with Invitations
+
+- [x] Allow user to invite members directly when creating a new list // 2025-12-05: implemented full flow
+  - [x] Add an "Invite Members" section in the create list form // 2025-12-05: added collapsible section with pseudonym input and role selector
+  - [x] Allow adding multiple pseudonyms with role selection (reader/writer) // 2025-12-05: users can add multiple invitations before creating list
+  - [x] Send invitations automatically after list creation // 2025-12-05: backend creates invitations in ListsService.create
+  - [x] Show success/error feedback for each invitation sent // 2025-12-05: Alert shows failed invitations with reasons

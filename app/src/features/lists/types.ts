@@ -1,3 +1,9 @@
+export interface InvitationResult {
+  pseudonym: string;
+  success: boolean;
+  error?: string;
+}
+
 export interface List {
   id: string;
   title: string;
@@ -8,6 +14,7 @@ export interface List {
   userRole?: 'OWNER' | 'WRITER' | 'READER';
   items?: Item[];
   members?: ListMember[];
+  invitationResults?: InvitationResult[];
 }
 
 export interface Item {

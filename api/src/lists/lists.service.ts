@@ -1,11 +1,16 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseService } from '../auth/supabase.service';
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
+import { InvitationStatus } from '@prisma/client';
 
 @Injectable()
 export class ListsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private supabaseService: SupabaseService,
+  ) {}
 
   async create(createListDto: CreateListDto, userId: string) {
     const list = await this.prisma.list.create({
@@ -17,10 +22,76 @@ export class ListsService {
       include: {
         items: true,
         members: true,
+        invitations: true,
       },
     });
 
-    return list;
+    // Send invitations if provided
+    const invitationResults: { pseudonym: string; success: boolean; error?: string }[] = [];
+
+    if (createListDto.invitations && createListDto.invitations.length > 0) {
+      const supabase = this.supabaseService.getClient();
+      const { data: usersData } = await supabase.auth.admin.listUsers();
+      const allUsers = usersData?.users || [];
+
+      for (const inv of createListDto.invitations) {
+        const inviteeUser = allUsers.find(u => u.user_metadata?.pseudonym === inv.inviteePseudonym);
+
+        if (!inviteeUser) {
+          invitationResults.push({
+            pseudonym: inv.inviteePseudonym,
+            success: false,
+            error: 'User not found',
+          });
+          continue;
+        }
+
+        if (inviteeUser.id === userId) {
+          invitationResults.push({
+            pseudonym: inv.inviteePseudonym,
+            success: false,
+            error: 'Cannot invite yourself',
+          });
+          continue;
+        }
+
+        try {
+          await this.prisma.invitation.create({
+            data: {
+              listId: list.id,
+              inviterId: userId,
+              inviteeId: inviteeUser.id,
+              inviteeEmail: inviteeUser.email,
+              inviteePseudonym: inviteeUser.user_metadata?.pseudonym || inv.inviteePseudonym,
+              role: inv.role,
+              status: InvitationStatus.PENDING,
+            },
+          });
+          invitationResults.push({ pseudonym: inv.inviteePseudonym, success: true });
+        } catch {
+          invitationResults.push({
+            pseudonym: inv.inviteePseudonym,
+            success: false,
+            error: 'Failed to create invitation',
+          });
+        }
+      }
+    }
+
+    // Re-fetch list with invitations
+    const updatedList = await this.prisma.list.findUnique({
+      where: { id: list.id },
+      include: {
+        items: true,
+        members: true,
+        invitations: true,
+      },
+    });
+
+    return {
+      ...updatedList,
+      invitationResults,
+    };
   }
 
   async findAll(userId: string) {
